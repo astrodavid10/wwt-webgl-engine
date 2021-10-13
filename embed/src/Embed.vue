@@ -36,6 +36,19 @@
       </div>
     </transition>
 
+    <div id="map-slider-container">
+      <vue-slider
+        id="map-slider"
+        v-model="twoWayMoonMapIndex"
+        class="scrubber"
+        :min="0"
+        :max="moonMaps.length-1"
+        :marks="moonMapMarks"
+        :tooltip-formatter="formatMoonMapName"
+        :tooltipPlacement="'bottom'"
+      ></vue-slider>
+    </div>
+
     <ul id="controls">
       <li v-show="showToolMenu">
         <v-popover placement="left">
@@ -166,7 +179,7 @@ import { Component, Prop, Watch } from "vue-property-decorator";
 import * as screenfull from "screenfull";
 
 import { fmtDegLat, fmtDegLon, fmtHours } from "@wwtelescope/astro";
-import { Place } from "@wwtelescope/engine";
+import { Imageset, Place, WWTControl } from "@wwtelescope/engine";
 import { ImageSetType } from "@wwtelescope/engine-types";
 import {
   SetupForImagesetOptions,
@@ -235,6 +248,8 @@ export default class Embed extends WWTAwareComponent {
   componentState = ComponentState.LoadingResources;
   backgroundImagesets: BackgroundImageset[] = [];
   currentTool: ToolType = null;
+  curMoonMapIndex: number = 0;
+  moonMaps: string[] = [];
   fullscreenModeActive = false;
   tourPlaybackJustEnded = false;
   windowShape = defaultWindowShape;
@@ -335,11 +350,10 @@ export default class Embed extends WWTAwareComponent {
         prom = prom.then(async () => {
           const folder = await this.loadImageCollection({
             url: this.embedSettings.wtmlUrl,
-            loadChildFolders: false,
+            loadChildFolders: true,
           });
 
           if (this.embedSettings.wtmlPlace) {
-
             // Currently, there is an issue with the `places` field of a `Folder`
             // object populating correctly. Thus, we iterate over `children` instead
             for (const pl of folder.get_children() ?? []) {
@@ -360,12 +374,29 @@ export default class Embed extends WWTAwareComponent {
         });
       }
 
-      prom.then(() => {
+      prom.then(async () => {
         // setupForImageset() will apply a default background that is appropriate
         // for the foreground, but we want to be able to override it.
 
         let backgroundWasInitialized = false;
         let bgName = this.embedSettings.backgroundImagesetName;
+
+        // Load up the moon imagesets
+        const wtmlUrl = "https://storage.googleapis.com/jc-wwt-testing-files/wwt_moon_maps.wtml";
+
+        await this.loadImageCollection({
+          url: wtmlUrl,
+          loadChildFolders: true
+        });
+
+        // Get the moon imagesets
+        const moonImagesets = WWTControl.getImageSets().filter(imageset => imageset.get_referenceFrame() == "Moon");
+        for (const imageset of moonImagesets) {
+          if (imageset.get_name() !== null) {
+            this.moonMaps.push(imageset.get_name());
+            console.log(`Adding ${imageset.get_name()} to moonMaps`);
+          }
+        }
 
         if (this.embedSettings.foregroundImagesetName.length) {
           const img = this.lookupImageset(
@@ -558,6 +589,13 @@ export default class Embed extends WWTAwareComponent {
     return minutes.toString() + ":" + seconds.toString().padStart(2, "0");
   }
 
+  formatMoonMapName(index: number): string {
+    if (index < 0 || index >= this.moonMaps.length) {
+      return '';
+    }
+    return this.moonMaps[index];
+  }
+
   get twoWayTourTimecode() {
     return this.wwtTourTimecode;
   }
@@ -565,6 +603,30 @@ export default class Embed extends WWTAwareComponent {
   set twoWayTourTimecode(code: number) {
     this.seekToTourTimecode(code);
     this.tourPlaybackJustEnded = false;
+  }
+
+  get twoWayMoonMapIndex() {
+    return this.curMoonMapIndex;
+  }
+
+  set twoWayMoonMapIndex(index: number) {
+    this.curMoonMapIndex = index;
+    const name = this.moonMaps[index];
+    this.setBackgroundImageByName(name);
+    this.setForegroundImageByName(name);
+  }
+
+  moonMapMarks(_index: number) {
+    return {
+      label: '',
+      style: {
+        height: '8px',
+        width: '8px',
+        display: 'block',
+        transform: 'translate(-2px, -2px)',
+        backgroundColor: '#3498db' // This matches the default vue-slider color
+      }
+    };
   }
 
   @Watch("wwtTourCompletions")
@@ -626,6 +688,27 @@ body {
     margin: 0;
     padding: 0;
   }
+}
+
+#map-slider-container {
+  position: absolute;
+  top: 10px;
+  left: 20%;
+  width: 60%;
+  display: flex;
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: center;
+}
+
+@media screen and (max-height: 1000px) {
+  #map-slider-container {
+    top: 1vw;
+  }
+}
+
+#map-slider {
+  flex: 1;
 }
 
 .fade-enter-active,
