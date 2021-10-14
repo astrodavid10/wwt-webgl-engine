@@ -28,6 +28,7 @@ import {
   LayerMap,
   SpreadSheetLayer,
   SpreadSheetLayerSettingsInterfaceRO,
+  TourPlayer,
   WWTControl,
 } from "@wwtelescope/engine";
 
@@ -780,6 +781,13 @@ export class WWTEngineVuexModule extends VuexModule implements WWTEngineVuexStat
     }
 
     return { tourRunTime, tourStopStartTimes };
+  }
+
+  get tourPlayer(): TourPlayer | null {
+    if (Vue.$wwt.inst === null)
+      throw new Error('cannot get tourPlayer without linking to WWTInstance');
+    
+    return Vue.$wwt.inst.getActiveTourPlayer();
   }
 
   @Mutation

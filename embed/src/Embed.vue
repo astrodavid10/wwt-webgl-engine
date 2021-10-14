@@ -36,7 +36,10 @@
       </div>
     </transition>
 
-    <div id="map-slider-container">
+    <div
+      id="map-slider-container"
+      v-if="currentTool != 'playback-controls'"
+    >
       <vue-slider
         id="map-slider"
         v-model="twoWayMoonMapIndex"
@@ -50,48 +53,43 @@
     </div>
 
     <ul id="controls">
-      <li v-show="showToolMenu">
+      <li v-show="showToolMenu"
+          v-if="currentTool != 'playback-controls'">
         <v-popover placement="left">
           <font-awesome-icon
             class="tooltip-target"
-            icon="sliders-h"
+            icon="space-shuttle"
             size="lg"
           ></font-awesome-icon>
           <template slot="popover">
             <ul class="tooltip-content tool-menu">
-              <li v-show="showCrossfader">
-                <a href="#" v-close-popover @click="selectTool('crossfade')"
-                  ><font-awesome-icon icon="adjust" /> Crossfade</a
-                >
-              </li>
-              <li v-show="showBackgroundChooser">
-                <a
-                  href="#"
-                  v-close-popover
-                  @click="selectTool('choose-background')"
-                  ><font-awesome-icon icon="mountain" /> Choose background</a
-                >
-              </li>
-              <li v-show="showPlaybackControls">
-                <a
-                  href="#"
-                  v-close-popover
-                  @click="selectTool('playback-controls')"
-                  ><font-awesome-icon icon="redo" /> Tour player controls</a
-                >
+              <li
+                v-close-popover
+                v-for="name in Object.keys(moonTours)"
+                :key="name"
+                @click="selectTour(name)"
+              >{{ name }}
               </li>
             </ul>
           </template>
         </v-popover>
       </li>
-      <li v-show="!wwtIsTourPlaying">
+      <li v-if="currentTool == 'playback-controls'"
+      >
+        <font-awesome-icon
+          icon="times"
+          size="lg"
+          @click="unselectTour()"
+        ></font-awesome-icon>
+      </li>
+      <li v-show="currentTool != 'playback-controls' || !wwtIsTourPlaying">
         <font-awesome-icon
           icon="search-plus"
           size="lg"
           @click="doZoom(true)"
         ></font-awesome-icon>
       </li>
-      <li v-show="!wwtIsTourPlaying">
+      <li v-show="currentTool != 'playback-controls' || !wwtIsTourPlaying">
         <font-awesome-icon
           icon="search-minus"
           size="lg"
@@ -174,12 +172,13 @@
 </template>
 
 <script lang="ts">
+import { mapGetters } from 'vuex';
 import { Component, Prop, Watch } from "vue-property-decorator";
 
 import * as screenfull from "screenfull";
 
 import { fmtDegLat, fmtDegLon, fmtHours } from "@wwtelescope/astro";
-import { Imageset, Place, WWTControl } from "@wwtelescope/engine";
+import { Imageset, Place, TourDocument, TourPlayer, WWTControl } from "@wwtelescope/engine";
 import { ImageSetType } from "@wwtelescope/engine-types";
 import {
   SetupForImagesetOptions,
@@ -249,10 +248,28 @@ export default class Embed extends WWTAwareComponent {
   backgroundImagesets: BackgroundImageset[] = [];
   currentTool: ToolType = null;
   curMoonMapIndex: number = 0;
+  currentTour: TourDocument | null = null;
   moonMaps: string[] = [];
   fullscreenModeActive = false;
   tourPlaybackJustEnded = false;
   windowShape = defaultWindowShape;
+
+  isTourPlaying = false;
+  moonTours: { [name: string]: string | undefined } = {
+    "Lunar Craters Robbins 2018" : "https://storage.googleapis.com/jc-wwt-testing-files/lunar_craters_database_robbins_2018_v3.WTT"
+  };
+
+  closeTour!: () => Promise<void>;
+  tourPlayer!: () => TourPlayer | null;
+
+  beforeCreate(): void {
+    this.$options.methods = {
+      ...this.$options.methods,
+      ...mapGetters("wwt-embed", [
+        "tourPlayer"
+      ])
+    };
+  }
 
   get isLoadingState() {
     return this.componentState == ComponentState.LoadingResources;
@@ -311,7 +328,8 @@ export default class Embed extends WWTAwareComponent {
   }
 
   get showPlaybackControls() {
-    return this.wwtIsTourPlayerActive && !this.wwtIsTourPlaying;
+    //return this.wwtIsTourPlayerActive && !this.wwtIsTourPlaying;
+    return true;
   }
 
   get showToolMenu() {
@@ -321,6 +339,42 @@ export default class Embed extends WWTAwareComponent {
       this.showCrossfader ||
       this.showPlaybackControls
     );
+  }
+
+  async selectTour(name: string) {
+    const player = this.tourPlayer();
+    const tourUrl: string | undefined = this.moonTours[name];
+    if (tourUrl !== undefined) {
+      await this.loadTour({
+        url: tourUrl,
+        play: false,
+      });
+
+      this.currentTool = 'playback-controls';
+    }
+  }
+
+  async unselectTour() {
+    const player = this.tourPlayer();
+
+    await (async() => {
+      if (player !== null) {
+        player.stop(true);
+        player.close();
+      }
+    })();
+
+    const name = this.moonMaps[this.curMoonMapIndex];
+    this.setBackgroundImageByName(name);
+    this.setForegroundImageByName(name);
+    await this.gotoRADecZoom({
+      raRad: this.wwtRARad,
+      decRad: this.wwtDecRad,
+      zoomDeg: 120,
+      instant: true,
+    });
+
+    this.currentTool = null;
   }
 
   created() {
@@ -382,19 +436,22 @@ export default class Embed extends WWTAwareComponent {
         let bgName = this.embedSettings.backgroundImagesetName;
 
         // Load up the moon imagesets
-        const wtmlUrl = "https://storage.googleapis.com/jc-wwt-testing-files/wwt_moon_maps.wtml";
+        const wtmlUrls = [
+          "https://storage.googleapis.com/jc-wwt-testing-files/wwt_moon_maps.wtml",
+          // "http://data1.wwtassets.org/packages/2021/10_kaguya/index.wtml",
+          // "http://data1.wwtassets.org/packages/2021/10_iotm/lola_clrshade_128ppd_v4/index.wtml",
+          // "https://data1.wwtassets.org/packages/2021/10_iotm/unilunargeo/unified_lunar_geology_v1.wtml",
+          // "https://data1.wwtassets.org/packages/2021/10_iotm/lroc_color_poles/cgi_moon_kit_v2.wtml",
+        ];
 
-        await this.loadImageCollection({
-          url: wtmlUrl,
-          loadChildFolders: true
-        });
+        const wtmlProms = wtmlUrls.map(url => this.loadImageCollection({url: url, loadChildFolders:true }));
+        await Promise.all(wtmlProms);
 
         // Get the moon imagesets
         const moonImagesets = WWTControl.getImageSets().filter(imageset => imageset.get_referenceFrame() == "Moon");
         for (const imageset of moonImagesets) {
           if (imageset.get_name() !== null) {
             this.moonMaps.push(imageset.get_name());
-            console.log(`Adding ${imageset.get_name()} to moonMaps`);
           }
         }
 
