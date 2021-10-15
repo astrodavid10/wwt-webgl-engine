@@ -804,6 +804,7 @@ export class WWTInstance {
     if (this.ctl.uiController instanceof TourPlayer)
       return this.ctl.uiController;
 
+    console.log(null);
     return null;
   }
 

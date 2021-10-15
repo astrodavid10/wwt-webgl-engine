@@ -37,9 +37,16 @@
     </transition>
 
     <div
-      id="map-slider-container"
+      id="map-controls-container"
       v-if="currentTool != 'playback-controls'"
     >
+      <font-awesome-icon
+        class="tooltip-target map-button"
+        icon="chevron-left"
+        size="lg"
+        color="white"
+        @click="moveLeft()"
+      ></font-awesome-icon>
       <vue-slider
         id="map-slider"
         v-model="twoWayMoonMapIndex"
@@ -49,7 +56,17 @@
         :marks="moonMapMarks"
         :tooltip-formatter="formatMoonMapName"
         :tooltipPlacement="'bottom'"
+        :adsorb="true"
+        :order="false"
+        :process="false"
       ></vue-slider>
+      <font-awesome-icon
+        class="tooltip-target map-button"
+        icon="chevron-right"
+        color="white"
+        size="lg"
+        @click="moveRight()"
+      ></font-awesome-icon>
     </div>
 
     <ul id="controls">
@@ -256,7 +273,8 @@ export default class Embed extends WWTAwareComponent {
 
   isTourPlaying = false;
   moonTours: { [name: string]: string | undefined } = {
-    "Lunar Craters Robbins 2018" : "https://storage.googleapis.com/jc-wwt-testing-files/lunar_craters_database_robbins_2018_v3.WTT"
+    "Lunar Craters Robbins 2018" : "https://storage.googleapis.com/jc-wwt-testing-files/lunar_craters_database_robbins_2018_v3.WTT",
+    "Tycho Crater" : "https://storage.googleapis.com/jc-wwt-testing-files/tycho_crater_2021_v1-Jon.WTT",
   };
 
   closeTour!: () => Promise<void>;
@@ -375,6 +393,14 @@ export default class Embed extends WWTAwareComponent {
     });
 
     this.currentTool = null;
+  }
+
+  moveLeft() {
+    if (this.curMoonMapIndex == 0) {
+      this.curMoonMapIndex = this.moonMaps.length - 1;
+    } else {
+      this.curMoonMapIndex -= 1;
+    }
   }
 
   created() {
@@ -677,10 +703,10 @@ export default class Embed extends WWTAwareComponent {
     return {
       label: '',
       style: {
-        height: '8px',
-        width: '8px',
+        height: '12px',
+        width: '12px',
         display: 'block',
-        transform: 'translate(-2px, -2px)',
+        transform: 'translate(-3px, -3px)',
         backgroundColor: '#3498db' // This matches the default vue-slider color
       }
     };
@@ -747,25 +773,31 @@ body {
   }
 }
 
-#map-slider-container {
+#map-controls-container {
   position: absolute;
-  top: 10px;
+  top: 0.5rem;
   left: 20%;
-  width: 60%;
+  width: 70%;
   display: flex;
+  gap: 5vw;
   margin-left: auto;
   margin-right: auto;
   justify-content: center;
 }
 
+.map-button {
+  cursor: pointer;
+}
+
 @media screen and (max-height: 1000px) {
-  #map-slider-container {
+  #map-controls-container {
     top: 1vw;
   }
 }
 
 #map-slider {
   flex: 1;
+  cursor: pointer;
 }
 
 .fade-enter-active,
