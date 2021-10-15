@@ -404,6 +404,11 @@ export default class Embed extends WWTAwareComponent {
   }
 
   created() {
+
+    // Hard-code this to always use the moon
+    this.embedSettings.backgroundImagesetName = "Moon";
+    this.embedSettings.foregroundImagesetName = "Moon";
+
     let prom = this.waitForReady().then(() => {
       for (const s of this.embedSettings.asSettings()) {
         this.applySetting(s);
@@ -787,12 +792,6 @@ body {
 
 .map-button {
   cursor: pointer;
-}
-
-@media screen and (max-height: 1000px) {
-  #map-controls-container {
-    top: 1vw;
-  }
 }
 
 #map-slider {
