@@ -19,6 +19,8 @@ import {
   faTimes,
   faChevronLeft,
   faChevronRight,
+  faBackward,
+  faForward,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
@@ -57,6 +59,8 @@ library.add(faTimes);
 library.add(faUndoAlt);
 library.add(faChevronLeft);
 library.add(faChevronRight);
+library.add(faBackward);
+library.add(faForward);
 
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 

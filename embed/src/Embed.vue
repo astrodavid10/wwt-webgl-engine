@@ -45,29 +45,40 @@
         icon="chevron-left"
         size="lg"
         color="white"
-        @click="moveLeft()"
+        @click="moveLeft"
       ></font-awesome-icon>
       <vue-slider
         id="map-slider"
         v-model="twoWayMoonMapIndex"
         class="scrubber"
         :min="0"
-        :max="moonMaps.length-1"
+        :max="Math.max(moonMaps.length-1, 0)"
         :marks="moonMapMarks"
         :tooltip-formatter="formatMoonMapName"
         :tooltipPlacement="'bottom'"
         :adsorb="true"
         :order="false"
         :process="false"
+        :use-keyboard="false"
       ></vue-slider>
       <font-awesome-icon
         class="tooltip-target map-button"
         icon="chevron-right"
-        color="white"
         size="lg"
-        @click="moveRight()"
+        color="white"
+        @click="moveRight"
       ></font-awesome-icon>
     </div>
+
+    <font-awesome-icon
+      v-if="prevMoonMapIndex >= 0"
+      id="previous-button"
+      class="map-button"
+      :icon="useBackward ? 'backward' : 'forward'"
+      color="white"
+      size="lg"
+      @click="previous"
+    ></font-awesome-icon>
 
     <ul id="controls">
       <li v-show="showToolMenu"
@@ -202,6 +213,7 @@ import {
   WWTAwareComponent,
 } from "@wwtelescope/engine-vuex";
 import { CreditMode, EmbedSettings } from "@wwtelescope/embed-common";
+import VueSlider from 'vue-slider-component';
 
 /** The overall state of the WWT embed component. */
 enum ComponentState {
@@ -264,14 +276,15 @@ export default class Embed extends WWTAwareComponent {
   componentState = ComponentState.LoadingResources;
   backgroundImagesets: BackgroundImageset[] = [];
   currentTool: ToolType = null;
-  curMoonMapIndex: number = 0;
-  currentTour: TourDocument | null = null;
-  moonMaps: string[] = [];
   fullscreenModeActive = false;
   tourPlaybackJustEnded = false;
   windowShape = defaultWindowShape;
 
-  isTourPlaying = false;
+  curMoonMapIndex: number = 0;
+  prevMoonMapIndex: number = -1;
+  currentTour: TourDocument | null = null;
+  moonMaps: string[] = [];
+  useBackward = true;
   moonTours: { [name: string]: string | undefined } = {
     "Lunar Craters Robbins 2018" : "https://storage.googleapis.com/jc-wwt-testing-files/lunar_craters_database_robbins_2018_v3.WTT",
     "Tycho Crater" : "https://storage.googleapis.com/jc-wwt-testing-files/tycho_crater_2021_v1-Jon.WTT",
@@ -396,11 +409,43 @@ export default class Embed extends WWTAwareComponent {
   }
 
   moveLeft() {
-    if (this.curMoonMapIndex == 0) {
-      this.curMoonMapIndex = this.moonMaps.length - 1;
+    if (this.twoWayMoonMapIndex == 0) {
+      this.twoWayMoonMapIndex = this.moonMaps.length - 1;
     } else {
-      this.curMoonMapIndex -= 1;
+      this.twoWayMoonMapIndex -= 1;
     }
+  }
+
+  moveRight() {
+    if (this.twoWayMoonMapIndex == this.moonMaps.length - 1) {
+      this.twoWayMoonMapIndex = 0;
+    } else {
+      this.twoWayMoonMapIndex += 1;
+    }
+  }
+
+  previous() {
+    if (this.twoWayMoonMapIndex != this.prevMoonMapIndex) {
+      const curIndex = this.twoWayMoonMapIndex;
+      this.twoWayMoonMapIndex = this.prevMoonMapIndex;
+      this.prevMoonMapIndex = curIndex;
+    }
+    this.useBackward = !this.useBackward;
+  }
+
+  @Watch('curMoonMapIndex')
+  onCurIndexChange(_newIndex: number, oldIndex: number) {
+    this.prevMoonMapIndex = oldIndex;
+
+    // This will show the tooltip.
+    // It's pretty hacky, but the tooltip doesn't
+    // automatically display when the value is changed
+    this.slider().focus();
+  }
+
+  slider(): VueSlider {
+    // Also pretty hacky, but it works
+    return this.$children[1] as VueSlider;
   }
 
   created() {
@@ -469,6 +514,7 @@ export default class Embed extends WWTAwareComponent {
         // Load up the moon imagesets
         const wtmlUrls = [
           "https://storage.googleapis.com/jc-wwt-testing-files/wwt_moon_maps.wtml",
+          //"https://storage.googleapis.com/jc-wwt-testing-files/china-vo-hips.wtml"
           // "http://data1.wwtassets.org/packages/2021/10_kaguya/index.wtml",
           // "http://data1.wwtassets.org/packages/2021/10_iotm/lola_clrshade_128ppd_v4/index.wtml",
           // "https://data1.wwtassets.org/packages/2021/10_iotm/unilunargeo/unified_lunar_geology_v1.wtml",
@@ -558,6 +604,15 @@ export default class Embed extends WWTAwareComponent {
     // const ro = new ResizeObserver(entries => this.onResizeEvent());
     // ro.observer(this.$el);
     this.onResizeEvent();
+
+    window.addEventListener('keydown', (event) => {
+      const code = event.code;
+      if (code == 'ArrowLeft') {
+        this.moveLeft();
+      } else if (code == 'ArrowRight') {
+        this.moveRight();
+      }
+    })
   }
 
   destroyed() {
@@ -797,6 +852,12 @@ body {
 #map-slider {
   flex: 1;
   cursor: pointer;
+}
+
+#previous-button {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
 }
 
 .fade-enter-active,
