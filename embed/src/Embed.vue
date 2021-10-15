@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    
     <WorldWideTelescope
       wwt-namespace="wwt-embed"
       v-bind:style="{
@@ -524,7 +525,7 @@ export default class Embed extends WWTAwareComponent {
 
         // Load up the moon imagesets
         const wtmlUrls = [
-          "https://storage.googleapis.com/jc-wwt-testing-files/wwt_moon_maps.wtml",
+          "https://web.wwtassets.org/specials/2021/iotmn/wwt_moon_maps.wtml",
           //"https://storage.googleapis.com/jc-wwt-testing-files/china-vo-hips.wtml"
           // "http://data1.wwtassets.org/packages/2021/10_kaguya/index.wtml",
           // "http://data1.wwtassets.org/packages/2021/10_iotm/lola_clrshade_128ppd_v4/index.wtml",
