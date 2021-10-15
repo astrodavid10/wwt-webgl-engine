@@ -81,7 +81,7 @@
       v-if="prevMoonMapIndex >= 0"
       id="previous-button"
       class="map-button"
-      :icon="useBackward ? 'backward' : 'forward'"
+      icon="sync-alt"
       color="white"
       size="lg"
       @click="previous"
@@ -292,10 +292,8 @@ export default class Embed extends WWTAwareComponent {
   prevMoonMapIndex: number = -1;
   currentTour: TourDocument | null = null;
   moonMaps: string[] = [];
-  useBackward = true;
   moonTours: { [name: string]: string | undefined } = {
     "Lunar Craters Robbins 2018" : "https://storage.googleapis.com/jc-wwt-testing-files/lunar_craters_database_robbins_2018_v3.WTT",
-    //"Tycho Crater" : "https://storage.googleapis.com/jc-wwt-testing-files/tycho_crater_2021_v1-Jon.WTT",
   };
 
   closeTour!: () => Promise<void>;
@@ -438,7 +436,6 @@ export default class Embed extends WWTAwareComponent {
       this.twoWayMoonMapIndex = this.prevMoonMapIndex;
       this.prevMoonMapIndex = curIndex;
     }
-    this.useBackward = !this.useBackward;
   }
 
   @Watch('curMoonMapIndex')
@@ -878,6 +875,10 @@ body {
   & svg {
     color: #2aa5f7;
   }
+}
+
+svg.map-button:active {
+  color: #2aa5f7;
 }
 
 #map-slider {
