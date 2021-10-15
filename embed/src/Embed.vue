@@ -449,6 +449,12 @@ export default class Embed extends WWTAwareComponent {
     // It's pretty hacky, but the tooltip doesn't
     // automatically display when the value is changed
     this.slider().focus();
+
+    // On mobile, the tooltip won't go away even if you click/zoom
+    // so we give it a timeout
+    setTimeout(() => {
+      this.slider().blur()
+    }, 2000);
   }
 
   slider(): VueSlider {
