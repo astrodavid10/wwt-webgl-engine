@@ -60,6 +60,7 @@
         :order="false"
         :process="false"
         :use-keyboard="false"
+        :contained="true"
       ></vue-slider>
       <font-awesome-icon
         class="tooltip-target map-button"
@@ -107,6 +108,7 @@
         <font-awesome-icon
           icon="times"
           size="lg"
+          class="nudgeright1"
           @click="unselectTour()"
         ></font-awesome-icon>
       </li>
@@ -836,8 +838,9 @@ body {
 #map-controls-container {
   position: absolute;
   top: 0.5rem;
-  left: 20%;
+  left: 15%;
   width: 70%;
+  padding-top: 3px; // This matches the padding of the right-hand controls li
   display: flex;
   gap: 5vw;
   margin-left: auto;
