@@ -19,14 +19,14 @@ import {
   faTimes,
   faChevronLeft,
   faChevronRight,
-  faBackward,
-  faForward,
   faSyncAlt,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 import VueSlider from 'vue-slider-component';
 import 'vue-slider-component/theme/default.css';
+
+import VueGtag from 'vue-gtag';
 
 import { createPlugin } from "@wwtelescope/engine-vuex";
 import { EmbedSettings } from "@wwtelescope/embed-common";
@@ -37,6 +37,10 @@ Vue.config.productionTip = false;
 
 Vue.use(VTooltip);
 Vue.use(Vuex);
+
+Vue.use(VueGtag, {
+  config: { id: "UA-107473046-1" }
+});
 
 const store = new Vuex.Store({});
 
