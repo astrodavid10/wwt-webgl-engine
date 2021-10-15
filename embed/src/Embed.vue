@@ -40,13 +40,16 @@
       id="map-controls-container"
       v-if="currentTool != 'playback-controls'"
     >
-      <font-awesome-icon
+      <div
         class="tooltip-target map-button"
-        icon="chevron-left"
-        size="lg"
-        color="white"
         @click="moveLeft"
-      ></font-awesome-icon>
+      >
+        <font-awesome-icon
+          icon="chevron-left"
+          size="lg"
+          color="white"
+        ></font-awesome-icon>
+      </div>
       <vue-slider
         id="map-slider"
         v-model="twoWayMoonMapIndex"
@@ -62,13 +65,16 @@
         :use-keyboard="false"
         :contained="true"
       ></vue-slider>
-      <font-awesome-icon
+      <div
         class="tooltip-target map-button"
-        icon="chevron-right"
-        size="lg"
-        color="white"
         @click="moveRight"
-      ></font-awesome-icon>
+      >
+        <font-awesome-icon
+          icon="chevron-right"
+          size="lg"
+          color="white"
+        ></font-awesome-icon>
+      </div>
     </div>
 
     <font-awesome-icon
@@ -842,7 +848,7 @@ body {
   width: 70%;
   padding-top: 3px; // This matches the padding of the right-hand controls li
   display: flex;
-  gap: 5vw;
+  gap: 3vw;
   margin-left: auto;
   margin-right: auto;
   justify-content: center;
@@ -850,6 +856,22 @@ body {
 
 .map-button {
   cursor: pointer;
+
+  // This makes the button basically square
+  // I was having trouble consistently hitting it on
+  // my phone screen without this
+  padding-left: 5px;
+  padding-right: 5px;
+
+  // Hide the blue background on mobile
+  -webkit-tap-highlight-color: transparent;
+}
+
+.map-button:active {
+
+  & svg {
+    color: #2aa5f7;
+  }
 }
 
 #map-slider {
