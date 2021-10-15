@@ -289,7 +289,7 @@ export default class Embed extends WWTAwareComponent {
   useBackward = true;
   moonTours: { [name: string]: string | undefined } = {
     "Lunar Craters Robbins 2018" : "https://storage.googleapis.com/jc-wwt-testing-files/lunar_craters_database_robbins_2018_v3.WTT",
-    "Tycho Crater" : "https://storage.googleapis.com/jc-wwt-testing-files/tycho_crater_2021_v1-Jon.WTT",
+    //"Tycho Crater" : "https://storage.googleapis.com/jc-wwt-testing-files/tycho_crater_2021_v1-Jon.WTT",
   };
 
   closeTour!: () => Promise<void>;
