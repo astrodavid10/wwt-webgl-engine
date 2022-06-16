@@ -143,6 +143,24 @@
       </div>
     </div>
 
+    <div
+      v-if="folder !== null"
+      class="folder-view"
+    >
+      <div
+        class="folder-item"
+        v-for="item of folderItems"
+        :key="item.get_name()"
+        :title="item.get_name()"
+        @click="() => selectItem(item)"
+      >
+        <img :src="item.get_thumbnailUrl()" />
+        <div
+          class="folder-item-name"
+        >{{item.get_name()}}</div>
+      </div>
+    </div>
+
     <div id="credits" v-show="embedSettings.creditMode == CreditMode.Default">
       <p>
         Powered by
@@ -166,13 +184,15 @@ import { Component, Prop, Watch } from "vue-property-decorator";
 import * as screenfull from "screenfull";
 
 import { fmtDegLat, fmtDegLon, fmtHours } from "@wwtelescope/astro";
-import { Place } from "@wwtelescope/engine";
+import { Folder, FolderUp, Place, Imageset } from "@wwtelescope/engine";
 import { ImageSetType } from "@wwtelescope/engine-types";
 import {
   SetupForImagesetOptions,
   WWTAwareComponent,
 } from "@wwtelescope/engine-vuex";
 import { CreditMode, EmbedSettings } from "@wwtelescope/embed-common";
+
+export type FItem = Folder | FolderUp | Imageset | Place;
 
 /** The overall state of the WWT embed component. */
 enum ComponentState {
@@ -225,6 +245,8 @@ const defaultWindowShape: Shape = { width: 1200, height: 900 };
 
 type WwtComponentLayout = { top: string; height: string };
 
+export type FolderItem = Folder | FolderUp | Imageset | Place;
+
 @Component
 export default class Embed extends WWTAwareComponent {
   CreditMode = CreditMode;
@@ -238,6 +260,8 @@ export default class Embed extends WWTAwareComponent {
   fullscreenModeActive = false;
   tourPlaybackJustEnded = false;
   windowShape = defaultWindowShape;
+
+  folder: Folder | null = null;
 
   get isLoadingState() {
     return this.componentState == ComponentState.LoadingResources;
@@ -393,6 +417,15 @@ export default class Embed extends WWTAwareComponent {
 
             this.setupForImageset(options);
           }
+        }
+
+        if (this.embedSettings.collectionUrl) {
+          this.loadImageCollection({
+            url: this.embedSettings.collectionUrl,
+            loadChildFolders: true
+          }).then((folder) => {
+            this.folder = folder;
+          });
         }
 
         if (!backgroundWasInitialized) {
@@ -586,8 +619,29 @@ export default class Embed extends WWTAwareComponent {
         return { top, height };
       }
     }
-
     return { top: "0", height: "100%" };
+  }
+
+  selectItem(item: FItem): void {
+    if (item instanceof Folder) {
+      this.folder = item;
+    } else if ("parent" in item) {
+      this.folder = item.parent;
+    } else if (item instanceof Imageset) {
+      this.setForegroundImageByName(item.get_name());
+      this.setBackgroundImageByName(item.get_name());
+    } else if (item instanceof Place) {
+      this.gotoTarget({
+        place: item,
+        noZoom: true,
+        instant: false,
+        trackObject: true
+      });
+    }
+  }
+
+  get folderItems() {
+    return this.folder?.get_children() ?? [];
   }
 }
 </script>
@@ -949,5 +1003,36 @@ ul.tool-menu {
       color: #fff;
     }
   }
+}
+
+.folder-view {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-direction: row;
+}
+
+.folder-item {
+  padding: 3px;
+  border: 1px solid white;
+  border-radius: 2px;
+  width: 96px;
+  cursor: pointer;
+
+  & img {
+    width: 96px;
+    height: 45px;
+    border-radius: 2px;
+  }
+}
+
+.folder-item-name {
+  color: white;
+  width: 100%;
+  font-size: 7pt;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 </style>

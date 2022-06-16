@@ -750,6 +750,10 @@ export class Folder implements Thumbnail {
   childLoadCallback(callback: Action): void;
 }
 
+export class FolderUp {
+  parent: Folder;
+}
+
 /** An simple Version 4 GUID.
  *
  * Note that in WWT, GUID contents are not validated in any way upon creation.

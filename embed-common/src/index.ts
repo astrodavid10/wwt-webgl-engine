@@ -32,6 +32,7 @@ export enum CreditMode {
 export class EmbedSettings {
   backgroundImagesetName = "";
   foregroundImagesetName = "";
+  collectionUrl = "";
   creditMode = CreditMode.Default;
   showCoordinateReadout = false;
   showCrosshairs = false;
@@ -50,6 +51,10 @@ export class EmbedSettings {
 
         case "ch":
           s.showCrosshairs = true;
+          break;
+
+        case "coll":
+          s.collectionUrl = value;
           break;
 
         case "cro":
