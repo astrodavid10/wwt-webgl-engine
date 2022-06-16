@@ -45,7 +45,6 @@ export function createPlugin<S>(): PluginObject<WWTEnginePluginOptions<S>> {
       options.store.registerModule(options.namespace, WWTEngineVuexModule);
       Vue.component('WorldWideTelescope', WWTComponent);
       Vue.$wwt = new WWTGlobalState();
-      console.log(Vue.$wwt);
     }
   }
 }

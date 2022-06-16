@@ -1,69 +1,124 @@
 <template>
   <div
     class="fv-root"
+    v-if="items !== null"
   >
     <div
-      v-for="item of folderItems"
+      class="item"
+      v-for="item of items"
       :key="item.get_name()"
+      :title="item.get_name()"
       @click="() => selectItem(item)"
     >
       <img :src="item.get_thumbnailUrl()" />
+      <div
+        class="item-name"
+      >{{item.get_name()}}</div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { mapMutations } from "vuex";
-import { Component, Prop, Vue } from "vue-property-decorator";
+import { mapActions, mapMutations } from "vuex";
+import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { Folder, FolderUp, Place, Imageset } from "@wwtelescope/engine";
-
-type FolderItem = Folder | FolderUp | Imageset;
+import { GotoTargetOptions } from "@wwtelescope/engine-helpers";
+import { Thumbnail } from "@wwtelescope/engine-types";
 
 @Component
 export default class FolderView extends Vue {
   @Prop() rootFolder!: Folder;
-  folder!: Folder;
+  items: Thumbnail[] | null = null;
 
+  gotoTarget!: (opts: GotoTargetOptions) => Promise<void>;
   setBackgroundImageByName!: (imagesetName: string) => void;
   setForegroundImageByName!: (imagesetName: string) => void;
 
   beforeCreate(): void {
     this.$options.methods = {
       ...this.$options.methods,
-      ...mapMutations("wwt-engine", [
+      ...mapMutations("wwt-embed", [
         "setBackgroundImageByName",
         "setForegroundImageByName"
+      ]),
+      ...mapActions("wwt-embed", [
+        "gotoTarget"
       ])
     };
   }
 
   created(): void {
-    this.folder = this.rootFolder;
-    console.log(this);
+    this.items = this.rootFolder.get_children();
   }
 
-  selectItem(item: FolderItem): void {
-    if (item instanceof Folder) {
-      this.folder = item;
-    } else if ("parent" in item) {
-      this.folder = item.parent;
+  selectItem(item: Thumbnail): void {
+    if (item instanceof Folder || item instanceof FolderUp) {
+      this.items = item.get_children();
     } else if (item instanceof Imageset) {
       this.setForegroundImageByName(item.get_name());
       this.setBackgroundImageByName(item.get_name());
+    } else if (item instanceof Place) {
+      const imageset = item.get_backgroundImageset();
+      if (imageset !== null) {
+        this.setForegroundImageByName(imageset.get_name());
+      }
+      this.gotoTarget({
+        place: item,
+        noZoom: false,
+        instant: false,
+        trackObject: true
+      });
     }
-    console.log(this.folder.get_children());
-  }
-
-  get folderItems() {
-    return this.folder.get_children();
   }
 
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .fv-root {
   display: flex;
   flex-direction: row;
+  width: auto;
+  overflow-x: auto;
+
+  &::-webkit-scrollbar {
+    padding: 1px;
+    height: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: black;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: white;
+    border-radius: 1px;
+  }
+
+  //width: 100%;
+  //justify-content: space-around;
+}
+
+.item {
+  padding: 3px;
+  border: 1px solid white;
+  border-radius: 2px;
+  width: 96px;
+  cursor: pointer;
+
+  & img {
+    width: 96px;
+    height: 45px;
+    border-radius: 2px;
+  }
+}
+
+.item-name {
+  color: white;
+  width: 100%;
+  font-size: 7pt;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 </style>

@@ -146,23 +146,10 @@
     <div
       class="bottom-content"
     >
-      <div
-        v-if="folder !== null"
-        class="folder-view"
-      >
-        <div
-          class="folder-item"
-          v-for="item of folderItems"
-          :key="item.get_name()"
-          :title="item.get_name()"
-          @click="() => selectItem(item)"
-        >
-          <img :src="item.get_thumbnailUrl()" />
-          <div
-            class="folder-item-name"
-          >{{item.get_name()}}</div>
-        </div>
-      </div>
+      <folder-view
+        v-if="collectionFolder !== null"
+        :root-folder="collectionFolder"
+      />
 
       <div id="credits" v-show="embedSettings.creditMode == CreditMode.Default">
         <p>
@@ -265,7 +252,7 @@ export default class Embed extends WWTAwareComponent {
   tourPlaybackJustEnded = false;
   windowShape = defaultWindowShape;
 
-  folder: Folder | null = null;
+  collectionFolder: Folder | null = null;
 
   get isLoadingState() {
     return this.componentState == ComponentState.LoadingResources;
@@ -428,7 +415,7 @@ export default class Embed extends WWTAwareComponent {
             url: this.embedSettings.collectionUrl,
             loadChildFolders: true
           }).then((folder) => {
-            this.folder = folder;
+            this.collectionFolder = folder;
           });
         }
 
@@ -624,31 +611,6 @@ export default class Embed extends WWTAwareComponent {
       }
     }
     return { top: "0", height: "100%" };
-  }
-
-  selectItem(item: FItem): void {
-    if (item instanceof Folder) {
-      this.folder = item;
-    } else if ("parent" in item) {
-      this.folder = item.parent;
-    } else if (item instanceof Imageset) {
-      this.setForegroundImageByName(item.get_name());
-      this.setBackgroundImageByName(item.get_name());
-    } else if (item instanceof Place) {
-      if (item.get_backgroundImageset()) {
-        this.setForegroundImageByName(item.get_backgroundImageset().get_name());
-      }
-      this.gotoTarget({
-        place: item,
-        noZoom: false,
-        instant: false,
-        trackObject: true
-      });
-    }
-  }
-
-  get folderItems() {
-    return this.folder?.get_children() ?? [];
   }
 }
 </script>
@@ -1009,53 +971,6 @@ ul.tool-menu {
       color: #fff;
     }
   }
-}
-
-.folder-view {
-  display: flex;
-  flex-direction: row;
-  width: auto;
-  overflow-x: auto;
-
-  &::-webkit-scrollbar {
-    padding: 1px;
-    height: 3px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: black;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: white;
-    border-radius: 1px;
-  }
-
-  //width: 100%;
-  //justify-content: space-around;
-}
-
-.folder-item {
-  padding: 3px;
-  border: 1px solid white;
-  border-radius: 2px;
-  width: 96px;
-  cursor: pointer;
-
-  & img {
-    width: 96px;
-    height: 45px;
-    border-radius: 2px;
-  }
-}
-
-.folder-item-name {
-  color: white;
-  width: 100%;
-  font-size: 7pt;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
 }
 
 .bottom-content {

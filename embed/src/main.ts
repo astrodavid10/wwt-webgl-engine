@@ -23,7 +23,6 @@ import 'vue-slider-component/theme/default.css';
 
 import { createPlugin } from "@wwtelescope/engine-vuex";
 import { EmbedSettings } from "@wwtelescope/embed-common";
-import TransitionExpand from "../../research-app/src/TransitionExpand.vue";
 import FolderView from "./FolderView.vue";
 
 import Embed from "./Embed.vue";
@@ -54,7 +53,7 @@ library.add(faUndoAlt);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 
 Vue.component('vue-slider', VueSlider);
-Vue.component('transition-expand', TransitionExpand);
+Vue.component('folder-view', FolderView);
 
 const queryParams = new URLSearchParams(window.location.search);
 const settings = EmbedSettings.fromQueryParams(queryParams.entries());

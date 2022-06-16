@@ -750,7 +750,18 @@ export class Folder implements Thumbnail {
   childLoadCallback(callback: Action): void;
 }
 
-export class FolderUp {
+export class FolderUp implements Thumbnail {
+  get_name(): string;
+  get_thumbnail(): Thumbnail;
+  set_thumbnail(thumbnail: Thumbnail): Thumbnail;
+  get_thumbnailUrl(): string;
+  set_thumbnailUrl(url: string): string;
+  get_isImage(): boolean;
+  get_isTour(): boolean;
+  get_isFolder(): boolean;
+  get_isCloudCommunityItem(): boolean;
+  get_readOnly(): boolean;
+  get_children(): Thumbnail[] | null;
   parent: Folder;
 }
 
