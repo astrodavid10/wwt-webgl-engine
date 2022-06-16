@@ -144,36 +144,40 @@
     </div>
 
     <div
-      v-if="folder !== null"
-      class="folder-view"
+      class="bottom-content"
     >
       <div
-        class="folder-item"
-        v-for="item of folderItems"
-        :key="item.get_name()"
-        :title="item.get_name()"
-        @click="() => selectItem(item)"
+        v-if="folder !== null"
+        class="folder-view"
       >
-        <img :src="item.get_thumbnailUrl()" />
         <div
-          class="folder-item-name"
-        >{{item.get_name()}}</div>
-      </div>
-    </div>
-
-    <div id="credits" v-show="embedSettings.creditMode == CreditMode.Default">
-      <p>
-        Powered by
-        <a href="https://worldwidetelescope.org/home/"
-          >AAS WorldWide Telescope</a
+          class="folder-item"
+          v-for="item of folderItems"
+          :key="item.get_name()"
+          :title="item.get_name()"
+          @click="() => selectItem(item)"
         >
-        <a href="https://worldwidetelescope.org/home/"
-          ><img alt="WWT Logo" src="./assets/logo_wwt.png"
-        /></a>
-        <a href="https://aas.org/"
-          ><img alt="AAS Logo" src="./assets/logo_aas.png"
-        /></a>
-      </p>
+          <img :src="item.get_thumbnailUrl()" />
+          <div
+            class="folder-item-name"
+          >{{item.get_name()}}</div>
+        </div>
+      </div>
+
+      <div id="credits" v-show="embedSettings.creditMode == CreditMode.Default">
+        <p>
+          Powered by
+          <a href="https://worldwidetelescope.org/home/"
+            >AAS WorldWide Telescope</a
+          >
+          <a href="https://worldwidetelescope.org/home/"
+            ><img alt="WWT Logo" src="./assets/logo_wwt.png"
+          /></a>
+          <a href="https://aas.org/"
+            ><img alt="AAS Logo" src="./assets/logo_aas.png"
+          /></a>
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -631,9 +635,12 @@ export default class Embed extends WWTAwareComponent {
       this.setForegroundImageByName(item.get_name());
       this.setBackgroundImageByName(item.get_name());
     } else if (item instanceof Place) {
+      if (item.get_backgroundImageset()) {
+        this.setForegroundImageByName(item.get_backgroundImageset().get_name());
+      }
       this.gotoTarget({
         place: item,
-        noZoom: true,
+        noZoom: false,
         instant: false,
         trackObject: true
       });
@@ -839,12 +846,11 @@ body {
 }
 
 #credits {
-  position: absolute;
-  z-index: 10;
-  bottom: 0.5rem;
-  right: 1rem;
   color: #ddd;
   font-size: 70%;
+  flex-grow: 0;
+  flex-shrink: 0;
+  justify-self: flex-end;
 
   p {
     margin: 0;
@@ -1006,11 +1012,27 @@ ul.tool-menu {
 }
 
 .folder-view {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
   display: flex;
   flex-direction: row;
+  width: auto;
+  overflow-x: auto;
+
+  &::-webkit-scrollbar {
+    padding: 1px;
+    height: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: black;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: white;
+    border-radius: 1px;
+  }
+
+  //width: 100%;
+  //justify-content: space-around;
 }
 
 .folder-item {
@@ -1034,5 +1056,19 @@ ul.tool-menu {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+
+.bottom-content {
+  position: absolute;
+  display: flex;
+  width: calc(100% - 2rem);
+  flex-direction: row;
+  gap: 20px;
+  justify-content: space-between;
+  align-items: flex-end;
+  bottom: 0.5rem;
+  left: 1rem;
+  right: 1rem;
+  z-index: 10;
 }
 </style>
