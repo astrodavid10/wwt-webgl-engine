@@ -20,10 +20,10 @@
 
 <script lang="ts">
 import { mapActions, mapMutations } from "vuex";
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import { Component, Prop, Vue } from "vue-property-decorator";
 import { Folder, FolderUp, Place, Imageset } from "@wwtelescope/engine";
 import { GotoTargetOptions } from "@wwtelescope/engine-helpers";
-import { Thumbnail } from "@wwtelescope/engine-types";
+import { ImageSetType, Thumbnail } from "@wwtelescope/engine-types";
 
 @Component
 export default class FolderView extends Vue {
@@ -55,8 +55,11 @@ export default class FolderView extends Vue {
     if (item instanceof Folder || item instanceof FolderUp) {
       this.items = item.get_children();
     } else if (item instanceof Imageset) {
+      const type = item.get_dataSetType();
       this.setForegroundImageByName(item.get_name());
-      this.setBackgroundImageByName(item.get_name());
+      if (type === ImageSetType.planet) {
+        this.setBackgroundImageByName(item.get_name());
+      }
     } else if (item instanceof Place) {
       const imageset = item.get_backgroundImageset();
       if (imageset !== null) {
