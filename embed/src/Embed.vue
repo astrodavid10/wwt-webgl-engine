@@ -300,6 +300,8 @@ export default class Embed extends WWTAwareComponent {
       meta: [
         { property: "og:type", content: "website" },
         { property: "og:url", content: this.url },
+        { property: "og:title", content: this.title },
+        { property: "og:site_name", content: "WorldWide Telescope" },
         { property: "og:description", content: this.description },
         { property: "og:image", content: this.thumbnailUrl }
       ],
