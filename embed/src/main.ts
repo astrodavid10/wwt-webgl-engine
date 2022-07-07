@@ -16,10 +16,17 @@ import {
   faSlidersH,
   faUndoAlt,
 } from '@fortawesome/free-solid-svg-icons';
+import {
+  faFacebook,
+  faTwitter
+} from '@fortawesome/free-brands-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 import VueSlider from 'vue-slider-component';
 import 'vue-slider-component/theme/default.css';
+
+import VueMeta from "vue-meta";
+import VueSocialSharing from "vue-social-sharing";
 
 import { createPlugin } from "@wwtelescope/engine-vuex";
 import { EmbedSettings } from "@wwtelescope/embed-common";
@@ -31,6 +38,8 @@ Vue.config.productionTip = false;
 
 Vue.use(VTooltip);
 Vue.use(Vuex);
+Vue.use(VueMeta);
+Vue.use(VueSocialSharing);
 
 const store = new Vuex.Store({});
 
@@ -50,6 +59,8 @@ library.add(faSearchMinus);
 library.add(faSearchPlus);
 library.add(faSlidersH);
 library.add(faUndoAlt);
+library.add(faFacebook);
+library.add(faTwitter);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 
 Vue.component('vue-slider', VueSlider);

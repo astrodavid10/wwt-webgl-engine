@@ -152,6 +152,27 @@
       />
 
       <div id="credits" v-show="embedSettings.creditMode == CreditMode.Default">
+        <div id="network-sharing-container">
+          <ShareNetwork
+            v-for="network in networks"
+            :key="network.name"
+            :network="network.name"
+            :class="`${network.name}-button`"
+            :style="{backgroundColor: network.color, width: 'fit-content'}"
+            :description="description"
+            :url="url"
+            :title="title"
+            :hashtags="hashtagString"
+          >
+            <font-awesome-icon
+              :class="`${network.name}-icon`"
+              :style="{padding: '0px 4px 0px 2px'}"
+              :icon="['fab', network.name]"
+              size="lg"
+            ></font-awesome-icon>
+            <span>{{ network.text }}</span>
+          </ShareNetwork>
+        </div>
         <p>
           Powered by
           <a href="https://worldwidetelescope.org/home/"
@@ -182,8 +203,7 @@ import {
   WWTAwareComponent,
 } from "@wwtelescope/engine-vuex";
 import { CreditMode, EmbedSettings } from "@wwtelescope/embed-common";
-
-export type FItem = Folder | FolderUp | Imageset | Place;
+import { Meta } from '@sophosoft/vue-meta-decorator'
 
 /** The overall state of the WWT embed component. */
 enum ComponentState {
@@ -253,6 +273,36 @@ export default class Embed extends WWTAwareComponent {
   windowShape = defaultWindowShape;
 
   collectionFolder: Folder | null = null;
+  jwstWtmlUrl = "http://www.worldwidetelescope.org/wwtweb/catalog.aspx?W=jwst";
+
+  url = "https://web.wwtassets.org/specials/2022/jwst/";
+  title = "JWST with WWT"
+  description = "View James Webb Space Telescope imagery using WorldWide Telescope";
+  thumbnailUrl = "http://cdn.worldwidetelescope.org/thumbnails/jwst.jpg";
+  hashtags = ["jwst", "wwt", "worldwidetelescope"];
+
+  get hashtagString() {
+    return this.hashtags.join(",");
+  }
+
+  networks = [
+    { name: "facebook", color: "#1877f2", text: "Share on Facebook" },
+    { name: "twitter", color: "#1da1f2", text: "Tweet" }
+  ]
+
+  @Meta
+  getMetaInfo() {
+    return {
+      title: this.title,
+      //url: this.url,
+      meta: [
+        { property: "og:type", content: "website" },
+        //{ property: "og:url", content: this.url }
+        { property: "og:description", content: this.description },
+        { property: "og:image", content: this.thumbnailUrl }
+      ],
+    }
+  }
 
   get isLoadingState() {
     return this.componentState == ComponentState.LoadingResources;
@@ -410,14 +460,12 @@ export default class Embed extends WWTAwareComponent {
           }
         }
 
-        if (this.embedSettings.collectionUrl) {
-          this.loadImageCollection({
-            url: this.embedSettings.collectionUrl,
-            loadChildFolders: true
-          }).then((folder) => {
-            this.collectionFolder = folder;
-          });
-        }
+        this.loadImageCollection({
+          url: this.jwstWtmlUrl,
+          loadChildFolders: true
+        }).then((folder) => {
+          this.collectionFolder = folder;
+        });
 
         if (!backgroundWasInitialized) {
           if (!bgName.length) {
@@ -827,6 +875,11 @@ body {
     &:hover {
       text-decoration: underline;
     }
+
+    &[class^='share-network']:hover {
+      text-decoration: none;
+      filter: brightness(75%);
+    }
   }
 
   img {
@@ -985,5 +1038,23 @@ ul.tool-menu {
   left: 1rem;
   right: 1rem;
   z-index: 10;
+}
+
+#network-sharing-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.facebook-button {
+  border-radius: 3px;
+  background-color: rgb(11, 87, 187);
+  padding: 4px;
+}
+
+.twitter-button {
+  border-radius: 10px;
+  padding: 4px 8px;
 }
 </style>

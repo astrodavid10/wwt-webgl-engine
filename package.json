@@ -12,6 +12,7 @@
     "serve-research": "cd research-app && npm run serve"
   },
   "dependencies": {
+    "@sophosoft/vue-meta-decorator": "^0.1.1",
     "@types/debounce": "^1.2.0",
     "@types/jsdom": "^16.2.13",
     "@types/vue-color": "^2.4.3",
@@ -32,7 +33,9 @@
     "pako": "^1.0.11",
     "uuid": "^8.3.2",
     "vue-color": "^2.8.1",
-    "vue-select": "^3.11.2"
+    "vue-meta": "^2.4.0",
+    "vue-select": "^3.11.2",
+    "vue-social-sharing": "^3.0.9"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.7.0",
