@@ -29,7 +29,7 @@ import { ImageSetType, Thumbnail } from "@wwtelescope/engine-types";
 export default class FolderView extends Vue {
   @Prop() rootFolder!: Folder;
   items: Thumbnail[] | null = null;
-  lastSelectedItem: Thumbnail | null;
+  lastSelectedItem: Thumbnail | null = null;
 
   gotoTarget!: (opts: GotoTargetOptions) => Promise<void>;
   setBackgroundImageByName!: (imagesetName: string) => void;
