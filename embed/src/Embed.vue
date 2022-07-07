@@ -163,6 +163,8 @@
             :url="url"
             :title="title"
             :hashtags="hashtagString"
+            :quote="description"
+            twitter-user="WWTelescope"
           >
             <font-awesome-icon
               :class="`${network.name}-icon`"
@@ -297,7 +299,7 @@ export default class Embed extends WWTAwareComponent {
       //url: this.url,
       meta: [
         { property: "og:type", content: "website" },
-        //{ property: "og:url", content: this.url }
+        { property: "og:url", content: this.url },
         { property: "og:description", content: this.description },
         { property: "og:image", content: this.thumbnailUrl }
       ],
