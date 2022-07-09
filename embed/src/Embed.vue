@@ -36,6 +36,15 @@
       </div>
     </transition>
 
+    <div id="left-content">
+      <folder-view
+        v-if="collectionFolder !== null"
+        id="folder-view"
+        flex-direction="column"
+        :root-folder="collectionFolder"
+      />
+  </div>
+
     <ul id="controls">
       <li v-show="showToolMenu">
         <v-popover placement="left">
@@ -143,51 +152,42 @@
       </div>
     </div>
 
-    <div
-      class="bottom-content"
-    >
-      <folder-view
-        v-if="collectionFolder !== null"
-        :root-folder="collectionFolder"
-      />
-
-      <div id="credits" v-show="embedSettings.creditMode == CreditMode.Default">
-        <div id="network-sharing-container">
-          <ShareNetwork
-            v-for="network in networks"
-            :key="network.name"
-            :network="network.name"
-            :class="`${network.name}-button`"
-            :style="{backgroundColor: network.color, width: 'fit-content'}"
-            :description="description"
-            :url="url"
-            :title="title"
-            :hashtags="hashtagString"
-            :quote="description"
-            twitter-user="WWTelescope"
-          >
-            <font-awesome-icon
-              :class="`${network.name}-icon`"
-              :style="{padding: '0px 4px 0px 2px'}"
-              :icon="['fab', network.name]"
-              size="lg"
-            ></font-awesome-icon>
-            <span>{{ network.text }}</span>
-          </ShareNetwork>
-        </div>
-        <p>
-          Powered by
-          <a href="https://worldwidetelescope.org/home/"
-            >AAS WorldWide Telescope</a
-          >
-          <a href="https://worldwidetelescope.org/home/"
-            ><img alt="WWT Logo" src="./assets/logo_wwt.png"
-          /></a>
-          <a href="https://aas.org/"
-            ><img alt="AAS Logo" src="./assets/logo_aas.png"
-          /></a>
-        </p>
+    <div id="credits" v-show="embedSettings.creditMode == CreditMode.Default">
+      <div id="network-sharing-container">
+        <ShareNetwork
+          v-for="network in networks"
+          :key="network.name"
+          :network="network.name"
+          :class="`${network.name}-button`"
+          :style="{backgroundColor: network.color, width: 'fit-content'}"
+          :description="description"
+          :url="url"
+          :title="title"
+          :hashtags="hashtagString"
+          :quote="description"
+          twitter-user="WWTelescope"
+        >
+          <font-awesome-icon
+            :class="`${network.name}-icon`"
+            :style="{padding: '0px 4px 0px 2px'}"
+            :icon="['fab', network.name]"
+            size="lg"
+          ></font-awesome-icon>
+          <span>{{ network.text }}</span>
+        </ShareNetwork>
       </div>
+      <p>
+        Powered by
+        <a href="https://worldwidetelescope.org/home/"
+          >AAS WorldWide Telescope</a
+        >
+        <a href="https://worldwidetelescope.org/home/"
+          ><img alt="WWT Logo" src="./assets/logo_wwt.png"
+        /></a>
+        <a href="https://aas.org/"
+          ><img alt="AAS Logo" src="./assets/logo_aas.png"
+        /></a>
+      </p>
     </div>
   </div>
 </template>
@@ -862,9 +862,10 @@ body {
 #credits {
   color: #ddd;
   font-size: 70%;
-  flex-grow: 0;
-  flex-shrink: 0;
   justify-self: flex-end;
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
 
   p {
     margin: 0;
@@ -1030,25 +1031,12 @@ ul.tool-menu {
   }
 }
 
-.bottom-content {
-  position: absolute;
-  display: flex;
-  width: calc(100% - 2rem);
-  flex-direction: row;
-  gap: 20px;
-  justify-content: space-between;
-  align-items: flex-end;
-  bottom: 0.5rem;
-  left: 1rem;
-  right: 1rem;
-  z-index: 10;
-}
-
 #network-sharing-container {
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
   gap: 2px;
+  flex-shrink: 1;
 }
 
 .facebook-button {
@@ -1060,5 +1048,15 @@ ul.tool-menu {
 .twitter-button {
   border-radius: 10px;
   padding: 4px 8px;
+}
+
+#left-content {
+  position: absolute;
+  left: 0.5rem;
+  top: 0.5rem;
+  height: calc(100% - 2rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 </style>
