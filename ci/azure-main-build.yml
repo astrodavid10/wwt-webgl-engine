@@ -1,19 +1,17 @@
-# Copyright 2020-2022 the .NET Foundation
+# Copyright 2020-2023 the .NET Foundation
 # Licensed under the MIT License
 
-# Main build stage. The ScriptSharp stage has already run, creating a Cranko
-# release commit bundle and the magic wwtlib.js JavaScript file. With those in
-# hand, these parts of the build can run on any platform (yay!).
+# Main build stage.
 
 parameters:
 - name: 'zolaVersion'
-  default: '0.13.0'
+  default: '0.15.3'
   type: string
 
 jobs:
 - job: build_linux
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-latest
   steps:
   - template: azure-job-setup.yml
     parameters:
@@ -40,7 +38,6 @@ jobs:
   - bash: |
       set -xeuo pipefail
       mkdir -p $ARTIFACT_STAGING/engine-hosted
-      cp engine/wwtlib/bin/wwtlib.js $ARTIFACT_STAGING/engine-hosted/wwtlib.js
       cp engine/src/index.js $ARTIFACT_STAGING/engine-hosted/wwtsdk.js
       cp engine/src/index.min.js $ARTIFACT_STAGING/engine-hosted/wwtsdk.min.js
       cp engine/src/index.d.ts $ARTIFACT_STAGING/engine-hosted/wwtsdk.d.ts
@@ -103,7 +100,7 @@ jobs:
 
 - job: build_macos
   pool:
-    vmImage: macos-11
+    vmImage: macos-latest
   steps:
   - template: azure-job-setup.yml
     parameters:
@@ -125,7 +122,7 @@ jobs:
 
 - job: browserstack
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-latest
   steps:
   - template: azure-job-setup.yml
     parameters:
@@ -156,7 +153,7 @@ jobs:
       yarn run serve-research &
       sleep 10 # give the local service time to start up
       cd tests
-      yarn run bs-local -- -e default,firefox,edge,safari -o reports
+      yarn bs-local -e default,firefox,edge,safari -o reports
       pkill -f vue-cli-service  # stop the servers
     displayName: BrowserStack test local research app
 
@@ -170,7 +167,7 @@ jobs:
 
 - job: lint
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-latest
   steps:
   - template: azure-job-setup.yml
     parameters:
@@ -185,7 +182,7 @@ jobs:
 
 - job: docs_engine
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-latest
   steps:
   - template: azure-job-setup.yml
     parameters:
@@ -227,7 +224,7 @@ jobs:
 
 - job: docs_research
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-latest
   steps:
   - template: azure-job-setup.yml
     parameters:

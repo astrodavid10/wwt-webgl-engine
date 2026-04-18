@@ -1,4 +1,4 @@
-// Copyright 2020-2021 the .NET Foundation
+// Copyright 2020-2023 the .NET Foundation
 // Licensed under the MIT License
 
 import { D2H, R2D, R2H } from "@wwtelescope/astro";
@@ -23,6 +23,7 @@ import {
   TourPlayer,
   Wtml,
   WWTControl,
+  WWTControlBuilder,
   SpaceTimeController,
   SpreadSheetLayer,
   SpreadSheetLayerSetting,
@@ -119,7 +120,7 @@ export const enum InitControlViewType {
   Earth = "earth",
 }
 
-/** Options for the [[WWTInstance]] constructor. */
+/** Options for the {@link WWTInstance} constructor. */
 export interface InitControlSettings {
   /** The identifier of the DOM element to which to attach the control. If
    * unspecified, defaults to `"wwt"`. */
@@ -128,6 +129,17 @@ export interface InitControlSettings {
   /** Whether to immediately launch the WWT engine's internal rendering loop. If
    * unspecified, defaults to `false`. */
   startInternalRenderLoop?: boolean;
+
+  /** This controls whether the engine is launched in "freestanding" mode, where
+   * no core `worldwidetelescope.org` APIs are relied upon. The initial view
+   * will consist of only black sky, and the 3D solar system mode will be
+   * unavailable. This value is a base URL for locating various engine static
+   * assets. The default used by WWT is
+   * `https://web.wwtassets.org/engine/assets`. You can use that value here to
+   * activate freestanding mode if you are comfortable depending on the
+   * existence of the `wwtassets.org` domain. Otherwise, you can provide your
+   * own asset baseurl here.*/
+  freestandingAssetBaseurl?: string;
 
   /** The starting latitude (or declination) of the WWT view, in degrees. */
   startLatDeg?: number;
@@ -142,16 +154,7 @@ export interface InitControlSettings {
   startMode?: InitControlViewType;
 }
 
-const initControlDefaults: InitControlSettings = {
-  elId: "wwt",
-  startInternalRenderLoop: false,
-  startLatDeg: 0,
-  startLngDeg: 0,
-  startZoomDeg: 360,
-  startMode: InitControlViewType.Sky,
-};
-
-/** Options for [[WWTInstance.gotoTarget]]. */
+/** Options for {@link WWTInstance.gotoTarget}. */
 export interface GotoTargetOptions {
   /** The destination of the view. */
   place: Place;
@@ -168,11 +171,14 @@ export interface GotoTargetOptions {
   /** If true, the camera will continue tracking the view target as it moves
    * with the progression of the WWT internal clock. */
   trackObject: boolean;
+
+  /** Optional: The desired duration of the movement */
+  duration?: number;
 }
 
 
 /** Deprecated, use AddImageSetLayerOptions instead.
- *  Options for [[WWTInstance.addImageSetLayer]]. */
+ *  Options for {@link WWTInstance.addImageSetLayer}. */
 export interface LoadFitsLayerOptions {
   /** The URL of the FITS file. */
   url: string;
@@ -185,20 +191,20 @@ export interface LoadFitsLayerOptions {
   gotoTarget: boolean;
 }
 
-/** Options for [[WWTInstance.addImageSetLayer]]. */
+/** Options for {@link WWTInstance.addImageSetLayer}. */
 export interface AddImageSetLayerOptions {
   /** The URL of the FITS file *or* the URL of the desired image set.
    *
    * This should match an image set URL previously loaded with
-   * [[WWTInstance.loadImageCollection]]. */
+   * {@link WWTInstance.loadImageCollection}. */
   url: string;
 
   /** Indicates what type of layer you are adding.
    *
-   * If "fits", the [[url]] will be taken to point to a single FITS File that
+   * If "fits", the {@link url} will be taken to point to a single FITS File that
    * should be added. If "preloaded", it will be taken to match the URL
    * associated with an imageset that has already been added to WWT's internal
-   * catalogs via [[WWTInstance.loadImageCollection]]. If "autodetect", WWT will
+   * catalogs via {@link WWTInstance.loadImageCollection}. If "autodetect", WWT will
    * guess: if the URL ends with a FITS-like extension, "fits" mode will be
    * activated; otherwise it will use "preloaded" mode. */
   mode: "autodetect" | "fits" | "preloaded";
@@ -211,7 +217,7 @@ export interface AddImageSetLayerOptions {
   goto: boolean;
 }
 
-/** Options for [[WWTInstance.setImageSetLayerOrder]]. */
+/** Options for {@link WWTInstance.setImageSetLayerOrder}. */
 export interface SetLayerOrderOptions {
   /** The ID of the layer. */
   id: string;
@@ -221,7 +227,7 @@ export interface SetLayerOrderOptions {
 }
 
 
-/** Options for [[WWTInstance.stretchFitsLayer]]. */
+/** Options for {@link WWTInstance.stretchFitsLayer}. */
 export interface StretchFitsLayerOptions {
   /** The ID of the FITS layer. */
   id: string;
@@ -236,7 +242,7 @@ export interface StretchFitsLayerOptions {
   vmax: number;
 }
 
-/** Options for [[WWTInstance.setFitsLayerColormap]]. */
+/** Options for {@link WWTInstance.setFitsLayerColormap}. */
 export interface SetFitsLayerColormapOptions {
   /** The ID of the FITS layer. */
   id: string;
@@ -290,7 +296,7 @@ export interface GetCatalogHipsDataInViewOptions {
   limit: boolean;
 }
 
-/** Options for [[setupForImageset]]. */
+/** Options for {@link WWTInstance.setupForImageset}. */
 export interface SetupForImagesetOptions {
   /** The imageset to foreground. */
   foreground: Imageset;
@@ -298,6 +304,35 @@ export interface SetupForImagesetOptions {
   /** The background imageset to use. If unspecified, a sensible default is
    * chosen. */
   background?: Imageset;
+}
+
+/** Options for {@link WWTInstance.captureFrame}. */
+export interface CaptureFrameOptions {
+  /** The desired image width, in pixels. */
+  width: number;
+
+  /** The desired image height, in pixels. */
+  height: number;
+
+  /** The MIME type for the desired image format (e.g. `"image/jpeg"`). */
+  format: string;
+}
+
+export interface CaptureVideoOptions {
+  /** The desired image width, in pixels. */
+  width: number;
+
+  /** The desired image height, in pixels. */
+  height: number;
+
+  /** The number of frames per second */
+  framesPerSecond: number;
+
+  /** The total number of frames to capture */
+  totalFrames: number;
+
+  /** The MIME type for the desired image format of output frames (e.g. `"image/jpeg"`). */
+  format: string;
 }
 
 interface ResolveFunction<T> {
@@ -321,9 +356,16 @@ class SavedPromise<P, T> {
 }
 
 export class WWTInstance {
+  /** The [`WWTControl`](../../engine/classes/WWTControl-1.html) associated with this instance. */
   readonly ctl: WWTControl;
+
+  /** The [`LayerManager`](../../engine/modules/LayerManager.html) associated with this instance. */
   readonly lm: LayerManagerObject;
+
+  /** The [`ScriptInterface`](../../engine/classes/ScriptInterface.html) associated with this instance. */
   readonly si: ScriptInterface;
+
+  /** The [`SpaceTimeController`](../../engine/modules/SpaceTimeController.html) associated with this instance. */
   readonly stc: SpaceTimeControllerObject;
 
   /** Create a WWT control, attaching it to a DOM element.
@@ -336,17 +378,27 @@ export class WWTInstance {
   constructor(
     options: InitControlSettings = {}
   ) {
-    const o = { ...initControlDefaults, ...options };
+    const builder = new WWTControlBuilder(options.elId || "wwt");
+
+    if (options.startInternalRenderLoop !== undefined) {
+      builder.startRenderLoop(options.startInternalRenderLoop);
+    }
+
+    if (options.freestandingAssetBaseurl !== undefined) {
+      builder.freestandingMode(options.freestandingAssetBaseurl);
+    }
+
+    if (options.startLatDeg !== undefined && options.startLngDeg !== undefined) {
+      const zoom = options.startZoomDeg || 360;
+      builder.initialView(options.startLatDeg, options.startLngDeg, zoom);
+    }
+
+    if (options.startMode !== undefined) {
+      builder.initialMode(options.startMode);
+    }
 
     // We pretend that these objects aren't all singletons. One day.
-    this.si = WWTControl.initControl6(
-      o.elId as string,
-      o.startInternalRenderLoop as boolean,
-      o.startLatDeg as number,
-      o.startLngDeg as number,
-      o.startZoomDeg as number,
-      o.startMode as InitControlViewType,
-    );
+    this.si = builder.create();
     this.ctl = WWTControl.singleton;
     this.lm = LayerManager;
     this.stc = SpaceTimeController;
@@ -454,17 +506,40 @@ export class WWTInstance {
    * @param zoomDeg The zoom setting, in *degrees*
    * @param instant Whether to snap the camera instantly, or pan it
    * @param rollRad If specified, the roll of the target camera position, in radians
+   * @param duration If specified, the duration of the motion (in seconds)
    * @returns A void promise that resolves when the camera arrives at the target position.
    */
-  async gotoRADecZoom(raRad: number, decRad: number, zoomDeg: number, instant: boolean, rollRad?: number): Promise<void> {
+  async gotoRADecZoom(raRad: number, decRad: number, zoomDeg: number, instant: boolean, rollRad?: number, duration?: number): Promise<void> {
     this.ctl.gotoRADecZoom(
       raRad * R2H,
       decRad * R2D,
       zoomDeg,
       instant,
-      rollRad
+      rollRad,
+      duration,
     );
     return this.makeArrivePromise(instant);
+  }
+
+  /** Returns how long moving to a given position will take, in seconds.
+   *
+   * This wraps the underlying engine function of the same name, but homogenizing some
+   * of the angular arguments to use radians.
+   *
+   * @param raRad The RA of the target position, in radians
+   * @param decRad The declination of the target position, in radians
+   * @param zoomDeg The zoom setting, in *degrees*
+   * @param rollRad If specified, the roll of the target camera position, in radians
+   * @returns The amount of time, in seconds, that moving to the given position would take.
+   */
+  timeToRADecZoom(raRad: number, decRad: number, zoomDeg: number, rollRad?: number): number {
+    const time = this.ctl.timeToRADecZoom(
+      raRad * R2H,
+      decRad * R2D,
+      zoomDeg,
+      rollRad
+    );
+    return time;
   }
 
   /** Command the view to show a Place.
@@ -481,6 +556,19 @@ export class WWTInstance {
     return this.makeArrivePromise(options.instant);
   }
 
+  /** Add an imageset directly into the engine's database.
+   *
+   * If an imageset with the same URL has already been loaded, this is a no-op.
+   *
+   * @param imgset The imageset to add
+   * @returns Either the input argument, if it was added to the engine's
+   *   database, or the pre-existing imageset. The pre-existing imageset will
+   *   have the same URL but might differ in other respects, such as its name.
+   */
+  addImagesetToRepository(imgset: Imageset): Imageset {
+    return WWTControl.addImageSetToRepository(imgset);
+  }
+
   // Collection-loaded promises. To simplify the handling, we never load the
   // same URL more than once. Otherwise, all of the timing issues about multiple
   // requests for the same URL get gnarly to handle. And as far as the engine is
@@ -495,7 +583,7 @@ export class WWTInstance {
   * an XML document in the [WTML collection][wtml] format. Any `ImageSet`
   * entries in the collection, or `Place` entries containing image sets, will
   * be added to the WWT instance’s list of available imagery. Subsequent calls
-  * to functions like [[setForegroundImageByName]] will be able to locate the
+  * to functions like {@link setForegroundImageByName} will be able to locate the
   * new imagesets and display them to the user.
   *
   * Each unique URL is only requested once. Once a given URL has been
@@ -575,7 +663,7 @@ export class WWTInstance {
    * The FITS file must be downloaded and processed, so this API is
    * asynchronous, and is not appropriate for files that might be large.
    *
-   * The image set must have previously been created with [[loadImageCollection]]
+   * The image set must have previously been created with {@link loadImageCollection}
    */
   async addImageSetLayer(options: AddImageSetLayerOptions): Promise<ImageSetLayer> {
     return new Promise((resolve, _reject) => {
@@ -653,7 +741,7 @@ export class WWTInstance {
    * imgset.get_hipsProperties().get_catalogSpreadSheetLayer()
    * ```
    *
-   * You can use methods like [[applyTableLayerSettings]] to modify the settings
+   * You can use methods like {@link applyTableLayerSettings} to modify the settings
    * of this layer by extracting its ID string with `layer.id.toString()`.
    *
    * The contents of this catalog will update dynamically as the user navigates
@@ -675,7 +763,7 @@ export class WWTInstance {
 
   /** Fetch the subset of catalog HiPS data contained within the current view.
    *
-   * The imageset should have been loaded with the [[addCatalogHipsByName]]
+   * The imageset should have been loaded with the {@link addCatalogHipsByName}
    * call. The *limit* option should almost always be true, since if it is false
    * the data-fetch operation can potentially attempt to download and return
    * gigabytes of data.
@@ -824,7 +912,7 @@ export class WWTInstance {
 
   /** Load a tour from a URL.
    *
-   * Once the tour has loaded, you can use [[getActiveTourPlayer]] to get the
+   * Once the tour has loaded, you can use {@link getActiveTourPlayer} to get the
    * tour player controller and the underlying tour document.
    *
    * @param url The URL of the tour to load and play.
@@ -960,5 +1048,49 @@ export class WWTInstance {
 
     // Apply the change.
     player.playFromTourstop(stops[index]);
+  }
+
+  /** Capture the current frame as an image.
+   *
+   * This function returns a Promise whose resolved value is the image
+   * represented as a `Blob`.
+  */
+  captureFrame(options: CaptureFrameOptions): Promise<Blob | null> {
+    return new Promise((resolve, _reject) => {
+      this.ctl.captureFrame(blob => resolve(blob),
+        options.width,
+        options.height,
+        options.format);
+    });
+  }
+
+  /** Capture a video as a sequence of frames using the given parameters
+   *
+   * This function returns a readable stream whose values are the exported frames.
+  */
+  captureVideo(options: CaptureVideoOptions): ReadableStream<Blob | null> {
+    const wwtControl = this.ctl;
+    const videoStream = new ReadableStream<Blob | null>({
+      start(controller: ReadableStreamDefaultController) {
+        function stream() {
+          let received = 0;
+          wwtControl.captureVideo(blob => {
+            received++;
+            controller.enqueue(blob);
+            if (received >= options.totalFrames) {
+              controller.close();
+            }
+          },
+            options.width,
+            options.height,
+            options.framesPerSecond,
+            options.totalFrames,
+            options.format
+          );
+        }
+        return stream();
+      }
+    });
+    return videoStream;
   }
 }

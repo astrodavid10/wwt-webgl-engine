@@ -9,28 +9,45 @@
 [![npm](https://img.shields.io/npm/v/@wwtelescope/engine-pinia?label=@wwtelescope/engine-pinia)](https://www.npmjs.com/package/@wwtelescope/engine-pinia)
 [![npm](https://img.shields.io/npm/v/@wwtelescope/research-app?label=@wwtelescope/research-app)](https://www.npmjs.com/package/@wwtelescope/research-app)
 [![npm](https://img.shields.io/npm/v/@wwtelescope/research-app-messages?label=@wwtelescope/research-app-messages)](https://www.npmjs.com/package/@wwtelescope/research-app-messages)
+[![Powered by NumFOCUS](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A)](http://numfocus.org)
 
-# The AAS WorldWide Telescope WebGL engine
+# The WorldWide Telescope WebGL engine
 
-The “WebGL engine” of the [AAS] [WorldWide Telescope][wwt-home] (WWT) is a
+The “WebGL engine” of the [WorldWide Telescope][wwt-home] (WWT) is a
 JavaScript/[TypeScript] framework that powers the Web-based versions of the WWT
 visualization software, as exemplified by the [WWT web client][webclient].
 
 Learn more about WWT [here][wwt-home].
 
-[AAS]: https://aas.org/
 [TypeScript]: https://www.typescriptlang.org/
 [wwt-home]: https://worldwidetelescope.org/home/
 [webclient]: https://worldwidetelescope.org/webclient/
+
+[//]: # (numfocus-fiscal-sponsor-attribution)
+
+The WorldWide Telescope project uses an [open governance
+model](https://worldwidetelescope.org/about/governance/) and is fiscally
+sponsored by [NumFOCUS](https://numfocus.org/). Consider making a
+[tax-deductible donation](https://numfocus.org/donate-for-worldwide-telescope)
+to help the project pay for developer time, professional services, travel,
+workshops, and a variety of other needs.
+
+<div align="center">
+  <a href="https://numfocus.org/donate-for-worldwide-telescope">
+    <img height="60px"
+         src="https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png">
+  </a>
+</div>
 
 
 ## Developers’ quick start
 
 1. Check out this repository to a machine with [Node.js] and [Yarn].
+   1. Builds with versions of Node.js around 18.17 may fail with [an Invalid URL
+      error](https://github.com/nodejs/node/issues/48855).
+   1. There have also been reports of builds that hang on Linux with Node 20.x.
 1. `git submodule update --init`
 1. `yarn install`
-1. Either build or obtain the file `engine/wwtlib/bin/wwtlib.js` as described
-   below.
 1. `yarn lint` (uses [ESLint])
 1. `yarn build` creates:
    1. The core engine package in the `engine/` package.
@@ -64,8 +81,7 @@ The most important subdirectories are:
 
 [monorepo]: https://en.wikipedia.org/wiki/Monorepo
 
-- `@wwtelescope/engine` in `engine/`, the core engine code transpiled from C# and
-  wrapped in TypeScript annotations
+- `@wwtelescope/engine` in `engine/`, the core engine code with TypeScript annotations
 - `@wwtelescope/engine-pinia` in `engine-pinia/`, a higher-level package that turns the
   engine into a reusable [Vue]/[Pinia] component
 - `@wwtelescope/embed` in `embed/`, a web application that turns WWT into a
@@ -83,41 +99,9 @@ subdirectory. That module has been superseded by the Pinia version.
 [Vuex]: https://vuex.vuejs.org/
 
 
-## The `engine/wwtlib/bin/wwtlib.js` file
+## Building the code
 
-There’s one big wrinkle to the build process: the bulk of the engine code is
-actually C# code in the directory `engine/wwtlib/`. It’s forked from
-[wwt-windows-client] and is transpiled into JavaScript using an unreleased
-version of [ScriptSharp], an unmaintained tool. Fortunately, that build process
-results in a single file, `engine/wwtlib/bin/wwtlib.js`, that you can download
-from our CI systems if you’re not able to perform a Visual Studio build.
-
-[wwt-windows-client]: https://github.com/WorldWideTelescope/wwt-windows-client
-[ScriptSharp]: https://github.com/nikhilk/scriptsharp
-
-To build the engine library starting from C#:
-
-1. You need a Windows machine with Visual Studio 2017. Other versions of Visual
-   Studio might also work.
-1. Open the `engine/WebGLEngine.sln` solution and build the project it contains.
-   This should create the file `engine/wwtlib/bin/wwtlib.js`.
-
-Otherwise, check out the latest continuous integration build of this repository,
-download the `scriptsharp` artifact, and copy the `wwtlib.js` file to the location
-given above. (To find the artifact, go to the appropriate build in this project's
-[pipeline] on [Azure DevOps]). Under 'Related', select '9 published', and download
-artifacts for `scriptsharp`). If you want to change the C# code, you can file a pull
-request and access the artifacts associated with your pull request builds.
-
-[Azure DevOps]: https://azure.microsoft.com/en-us/services/devops/?nav=min
-[pipeline]: https://dev.azure.com/aasworldwidetelescope/WWT/_build?definitionId=21
-
-
-
-## Building the rest of the code
-
-Besides the creation of the file `engine/wwtlib/bin/wwtlib.js`, virtually
-everything in this repository is built using standard [Node.js]/[Yarn] tooling.
+Code in this repository is built using standard [Node.js]/[Yarn] tooling.
 These tools must be installed before you can do anything else. To set up your
 checkout, follow the instructions in the [Developers’ Quick Start][dqs] above.
 
@@ -188,7 +172,7 @@ To run the test suite on a local version of the app with ChromeDriver:
 yarn run serve-research &  # or equivalent
 cd tests
 yarn build
-yarn run local
+yarn local
 ```
 
 To run tests on a local version of the app via BrowserStack's multi-browser,
@@ -200,14 +184,14 @@ username and access key, respectively. You can find these values in your Browser
 
 [Account Settings]: https://www.browserstack.com/accounts/settings
 
-* Run the test suite as above but with the final command: `yarn run bs-local`
+* Run the test suite as above but with the final command: `yarn bs-local`
 
 By default, both of these local options will run the tests in Chrome. You can
 adjust the testing environments adding the `-e` option, which can be
 accomplished with syntax such as
 
 ```
-yarn run bs-local -- -e firefox,edge
+yarn bs-local -e firefox,edge
 ```
 
 
@@ -235,19 +219,13 @@ All participation in WWT communities is conditioned on your adherence to the
 
 ## Acknowledgments
 
-The AAS WorldWide Telescope system is a [.NET Foundation] project. Work on WWT
-has been supported by the [American Astronomical Society] (AAS), the US
-[National Science Foundation] (grants [1550701], [1642446], and [2004840]), the [Gordon
-and Betty Moore Foundation], and [Microsoft].
+Work on the WorldWide Telescope system has been supported by the [American
+Astronomical Society] (AAS), the [.NET Foundation], and other partners. See [the
+WWT user website][acks] for details.
 
 [American Astronomical Society]: https://aas.org/
 [.NET Foundation]: https://dotnetfoundation.org/
-[National Science Foundation]: https://www.nsf.gov/
-[1550701]: https://www.nsf.gov/awardsearch/showAward?AWD_ID=1550701
-[1642446]: https://www.nsf.gov/awardsearch/showAward?AWD_ID=1642446
-[2004840]: https://www.nsf.gov/awardsearch/showAward?AWD_ID=2004840
-[Gordon and Betty Moore Foundation]: https://www.moore.org/
-[Microsoft]: https://www.microsoft.com/
+[acks]: https://worldwidetelescope.org/about/acknowledgments/
 
 
 ## Legalities

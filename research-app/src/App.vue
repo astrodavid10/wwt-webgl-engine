@@ -8,6 +8,14 @@
       @pointerdown="wwtOnPointerDown"
     ></WorldWideTelescope>
 
+    <finder-scope
+      v-if="showFinderScope"
+      v-model="finderScopeActive"
+      :position="finderScopePosition"
+      :search-provider="searchProvider"
+      @place="handleFinderScopePlaceUpdate"
+    ></finder-scope>
+
     <!-- keydown.stops here and below prevent any keynav presses from reaching
       the toplevel UI handlers -->
     <div id="ui-elements">
@@ -44,7 +52,7 @@
               <label>Sources</label>
             </div>
             <source-item
-              v-for="source of sources"
+              v-for="source of sources.filter(src => src.type === wwtBackgroundImageset?.get_dataSetType())"
               v-bind:key="source.name"
               v-bind:source="source"
             />
@@ -345,7 +353,7 @@
       v-if="!hideAllChrome"
       @keydown.stop
     >
-      To get the full AAS WWT experience, consider using the latest version of
+      To get the full WWT experience, consider using the latest version of
       Chrome, Firefox or Edge. In case you would like to use Safari, we
       recommend that you
       <a href="https://discussions.apple.com/thread/8655829">enable WebGL 2.0</a
@@ -369,6 +377,7 @@ import { Source, researchAppStore } from "./store";
 import { wwtEngineNamespace } from "./namespaces";
 
 import { ImageSetType, SolarSystemObjects } from "@wwtelescope/engine-types";
+import { Place } from "@wwtelescope/engine";
 
 interface Message {
   event?: string;
@@ -398,7 +407,6 @@ import {
   extractSpreadSheetLayerSettings,
   extractImageSetLayerSettings,
   isCircleAnnotationSetting,
-  isEngineSetting,
   isImageSetLayerSetting,
   isPolyAnnotationSetting,
   isPolyLineAnnotationSetting,
@@ -415,6 +423,8 @@ import {
 import {
   classicPywwt,
   isPingPongMessage,
+  isClearTileCacheMessage,
+  finderScope,
   layers,
   selections,
   settings,
@@ -424,8 +434,11 @@ import {
   PointerUpMessage,
   ViewStateMessage,
 } from "@wwtelescope/research-app-messages";
+import { type SearchDataProvider, DefaultSearchDataProvider } from "@wwtelescope/ui-components";
 
 import {
+  convertEngineSetting,
+  isResearchAppEngineSetting,
   convertPywwtSpreadSheetLayerSetting,
   convertSpreadSheetLayerSetting,
 } from "./settings";
@@ -1143,8 +1156,8 @@ class KeyboardControlSettings {
 }
 
 interface RawSourceInfo {
-  ra: number;
-  dec: number;
+  lng: number;
+  lat: number;
   catalogLayer: CatalogLayerInfo;
   colNames: string[];
   values: string[];
@@ -1193,7 +1206,11 @@ const App = defineComponent({
       lastSelectedSource: null as Source | null,
       selectionProximity: 4,
       hideAllChrome: false,
-      hipsUrl: "http://www.worldwidetelescope.org/wwtweb/catalog.aspx?W=hips", // Temporary
+      showFinderScope: false,
+      finderScopeActive: false,
+      finderScopePosition: [0, 0] as [number, number],
+      searchProvider: new DefaultSearchDataProvider() as SearchDataProvider,
+      hipsUrl: `${window.location.protocol}//www.worldwidetelescope.org/wwtweb/catalog.aspx?W=hips`, // Temporary
       isPointerMoving: false,
       messageQueue: [] as Message[],
       pointerMoveThreshold: 6,
@@ -1216,6 +1233,7 @@ const App = defineComponent({
       lastUpdatedRA: 0.0,
       lastUpdatedDec: 0.0,
       lastUpdatedFov: 1.0,
+      lastUpdatedRoll: 0.0,
       lastUpdatedClockRate: 1.0,
       lastUpdatedTimestamp: 0, // `Date.now()` value
       
@@ -1890,6 +1908,8 @@ const App = defineComponent({
         this.handleModifyAllSelectability
       );
 
+      this.messageHandlers.set("clear_tile_cache", this.handleClearTileCache);
+
       // Ignore incoming view_state messages. When testing the app, you might want
       // to launch it as (e.g.)
       // `http://localhost:8080/?origin=http://localhost:8080/` so that you can
@@ -1969,9 +1989,10 @@ const App = defineComponent({
 
       const setting: [string, any] = [msg.setting, msg.value];
 
-      if (!isEngineSetting(setting)) return false;
+      if (!isResearchAppEngineSetting(setting)) return false;
+      const convertedSetting = convertEngineSetting(setting);
 
-      this.applySetting(setting);
+      this.applySetting(convertedSetting);
       return true;
     },
 
@@ -2013,12 +2034,20 @@ const App = defineComponent({
         for (const s of appModified) {
           if (s[0] == "hideAllChrome") this.hideAllChrome = s[1];
           if (s[0] == "selectionProximity") this.selectionProximity = s[1];
+          if (s[0] == "showFinderScope") this.showFinderScope = s[1];
         }
 
         return true;
       }
 
       return false;
+    },
+
+    handleClearTileCache(msg: any): boolean {
+      if (!isClearTileCacheMessage(msg)) return false;
+
+      this.clearTileCache();
+      return true;
     },
 
     wwtOnPointerMove(event: PointerEvent) {
@@ -2063,8 +2092,8 @@ const App = defineComponent({
       const needsUpdate =
         closestPt == null ||
         this.lastClosePt == null ||
-        this.lastClosePt.ra != closestPt.ra ||
-        this.lastClosePt.dec != closestPt.dec;
+        this.lastClosePt.lng != closestPt.lng ||
+        this.lastClosePt.lat != closestPt.lat;
       if (needsUpdate) {
         this.lastClosePt = closestPt;
       }
@@ -2073,6 +2102,11 @@ const App = defineComponent({
     wwtOnPointerDown(event: PointerEvent) {
       this.isPointerMoving = false;
       this.pointerStartPosition = { x: event.pageX, y: event.pageY };
+
+      if (this.showFinderScope && this.wwtBackgroundImageset?.get_dataSetType() == ImageSetType.sky && event.button === 2) {  // Right click
+        this.finderScopePosition = [event.pageX, event.pageY];
+        this.finderScopeActive = true;
+      }
     },
 
     wwtOnPointerUp(event: PointerEvent) {
@@ -2115,13 +2149,28 @@ const App = defineComponent({
       for (let i = 0; i < sourceInfo.values.length; i++) {
         obj[sourceInfo.colNames[i]] = sourceInfo.values[i];
       }
-      return {
-        ra: sourceInfo.ra,
-        dec: sourceInfo.dec,
+      const type = this.wwtBackgroundImageset?.get_dataSetType() ?? ImageSetType.sky;
+      const planetLike = [ImageSetType.earth, ImageSetType.planet].includes(type);
+      const baseInfo = {
         catalogLayer: sourceInfo.catalogLayer,
         layerData: obj,
         name: this.nameForSource(obj, sourceInfo.catalogLayer.name),
+        type,
       };
+
+      if (planetLike) {
+        return {
+          ...baseInfo,
+          lng: sourceInfo.lng,
+          lat: sourceInfo.lat,
+        };
+      } else {
+        return {
+          ...baseInfo,
+          ra: sourceInfo.lng,
+          dec: sourceInfo.lat,
+        };
+      }
     },
 
     // ImageSet layers, including FITS layers:
@@ -2406,12 +2455,14 @@ const App = defineComponent({
       const ra = this.wwtRARad;
       const dec = this.wwtDecRad;
       const fov = this.wwtZoomDeg / 6; // WWT convention, zoom = 6*fov
+      const roll = this.wwtRollRad * R2D;
       const clockRate = this.wwtClockRate;
 
       const needUpdate =
         ra != this.lastUpdatedRA ||
         dec != this.lastUpdatedDec ||
         fov != this.lastUpdatedFov ||
+        roll != this.lastUpdatedRoll ||
         clockRate != this.lastUpdatedClockRate ||
         Date.now() - this.lastUpdatedTimestamp > 60000;
 
@@ -2423,6 +2474,7 @@ const App = defineComponent({
         raRad: ra,
         decRad: dec,
         fovDeg: fov,
+        rollDeg: roll,
         engineClockISOT: this.wwtCurrentTime.toISOString(),
         systemClockISOT: new Date().toISOString(),
         engineClockRateFactor: clockRate,
@@ -2435,6 +2487,7 @@ const App = defineComponent({
       this.lastUpdatedRA = ra;
       this.lastUpdatedDec = dec;
       this.lastUpdatedFov = fov;
+      this.lastUpdatedRoll = roll;
       this.lastUpdatedClockRate = clockRate;
       this.lastUpdatedTimestamp = Date.now();
     },
@@ -2520,9 +2573,12 @@ const App = defineComponent({
         layer = sourceLayer;
       }
 
+      const rawSource = isProxy(source) ? toRaw(source) : source;
+      const rawLayer = isProxy(layer) ? toRaw(layer): layer;
       return {
-        ...source,
-        catalogLayer: layer,
+        ...rawSource,
+        type: ImageSetType[rawSource.type] as selections.ImageSetType,
+        catalogLayer: rawLayer,
       };
     },
 
@@ -2654,6 +2710,7 @@ const App = defineComponent({
       }
       return {
         ...src,
+        type: ImageSetType[src.type],
         catalogLayer: layer,
       };
     },
@@ -2703,7 +2760,6 @@ const App = defineComponent({
     // Add Imagery As Layer tool
 
     addImagery(iinfo: ImagesetInfo) {
-      console.log(iinfo);
       const msg: classicPywwt.CreateImageSetLayerMessage = {
         event: "image_layer_create",
         url: iinfo.url,
@@ -2780,8 +2836,11 @@ const App = defineComponent({
       const rowSeparator = "\r\n";
       const colSeparator = "\t";
 
-      const raDecDeg = this.findRADecForScreenPoint(point);
-      const target = { ra: D2R * raDecDeg.ra, dec: D2R * raDecDeg.dec };
+      const coordsDeg = this.findCoordinatesForScreenPoint(point);
+      if (!coordsDeg) {
+        return null;
+      }
+      const target = { lng: D2R * coordsDeg.lng, lat: D2R * coordsDeg.lat };
 
       for (const layerInfo of this.selectableTableLayers()) {
         const layer = this.spreadSheetLayer(layerInfo);
@@ -2801,14 +2860,14 @@ const App = defineComponent({
 
         for (const row of rows) {
           const values = row.split(colSeparator);
-          const ra = D2R * Number(values[lngCol]);
-          const dec = D2R * Number(values[latCol]);
-          const pt = { ra: ra, dec: dec };
-          const dist = distance(target.ra, target.dec, pt.ra, pt.dec);
+          const lng = D2R * Number(values[lngCol]);
+          const lat = D2R * Number(values[latCol]);
+          const pt = { lng, lat };
+          const dist = distance(target.lng, target.lat, pt.lng, pt.lat);
           if (dist < minDist) {
             closestPt = {
-              ra: ra,
-              dec: dec,
+              lng,
+              lat,
               colNames: colNames,
               values: values,
               catalogLayer: layerInfo,
@@ -2819,14 +2878,26 @@ const App = defineComponent({
       }
 
       if (closestPt !== null) {
-        const closestRADecDeg = { ra: closestPt.ra * R2D, dec: closestPt.dec * R2D };
-        const closestScreenPoint = this.findScreenPointForRADec(closestRADecDeg);
+        const closestLngLatDeg = { lng: closestPt.lng * R2D, lat: closestPt.lat * R2D };
+        const closestScreenPoint = this.findScreenPointForCoordinates(closestLngLatDeg);
         const pixelDist = Math.sqrt((point.x - closestScreenPoint.x) ** 2 + (point.y - closestScreenPoint.y) ** 2);
         if (!threshold || pixelDist < threshold) {
           return closestPt;
         }
       }
       return null;
+    },
+
+    handleFinderScopePlaceUpdate(place: Place | null) {
+      // Notify clients about a change in the selected Finder Scope place
+      if (this.$options.statusMessageDestination === null || this.allowedOrigin === null)
+        return;
+
+      const msg: finderScope.FinderScopePlaceMessage = {
+        type: "finder_scope_place",
+        placeXml: place?.asXml() ?? null,
+      };
+      this.$options.statusMessageDestination.postMessage(msg, this.allowedOrigin);
     }
   },
 
@@ -2853,7 +2924,9 @@ const App = defineComponent({
       this.loadImageCollection({
         url: this.hipsUrl,
         loadChildFolders: true,
-      }).then(() => {
+      }).catch((error) => {
+        console.error(error);
+      }).finally(() => {
         // Handle the query script
         // We (potentially) need the catalogs to have finished loading for this
         if (script !== null) {
@@ -3043,14 +3116,25 @@ const App = defineComponent({
       if (this.$options.statusMessageDestination === null || this.allowedOrigin === null)
         return;
 
-      const rawSource = isProxy(source) ? toRaw(source) : source;
       const msg: selections.SelectionStateMessage = {
         type: "wwt_selection_state",
         sessionId: this.statusMessageSessionId,
-        mostRecentSource: this.prepareForMessaging(rawSource),
+        mostRecentSource: this.prepareForMessaging(source),
       };
 
       this.$options.statusMessageDestination.postMessage(msg, this.allowedOrigin);
+    },
+
+    wwtBackgroundImageset(imageset: Imageset | null) {
+      if (imageset?.get_dataSetType() !== ImageSetType.sky) {
+        this.finderScopeActive = false;
+      }
+    },
+
+    showFinderScope(show: boolean) {
+      if (!show) {
+        this.finderScopeActive = false;
+      }
     },
 
     sources: {

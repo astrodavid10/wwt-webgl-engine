@@ -1,12 +1,13 @@
 {
-  "author": "The AAS WorldWide Telescope Team <wwt@aas.org>",
+  "author": "The WorldWide Telescope Team <hello@worldwidetelescope.org>",
   "bugs": {
-    "email": "wwt@aas.org",
+    "email": "hello@worldwidetelescope.org",
     "url": "https://github.com/WorldWideTelescope/wwt-webgl-engine/issues"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "~6.2.0",
+    "@fortawesome/fontawesome-svg-core": "^6.2.0",
     "@fortawesome/free-solid-svg-icons": "^6.2.0",
+    "@fortawesome/vue-fontawesome": "^3",
     "@kyvg/vue3-notification": "^2.4.1",
     "@wwtelescope/astro": "workspace:0.0.0-dev.0",
     "@wwtelescope/engine": "workspace:0.0.0-dev.0",
@@ -14,6 +15,7 @@
     "@wwtelescope/engine-pinia": "workspace:0.0.0-dev.0",
     "@wwtelescope/engine-types": "workspace:0.0.0-dev.0",
     "@wwtelescope/research-app-messages": "workspace:0.0.0-dev.0",
+    "@wwtelescope/ui-components": "workspace:0.0.0-dev.0",
     "moment": "^2.29.1",
     "screenfull": "^5",
     "vue": "^3",
@@ -22,7 +24,7 @@
     "vue-slider-component": "^4.1.0-beta.2",
     "vue3-popper": "^1.5.0"
   },
-  "description": "The AAS WorldWide Telescope research app.",
+  "description": "The WorldWide Telescope research app.",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
@@ -38,22 +40,23 @@
     "rimraf": "^3",
     "sass": "^1.26.3",
     "sass-loader": "^13.0.2",
-    "typedoc": "0.23.20",
+    "typedoc": "0.25.1",
     "typescript": "~4.8.4",
     "vue-template-compiler": "~2.6.11",
-    "webpack": "^5.0.0"
+    "webpack": "^5.104.1"
   },
   "homepage": "https://worldwidetelescope.org/home/",
   "internalDepVersions": {
     "@wwtelescope/astro": "7cb232125428a91bd8fd10be24fec904e3589cce",
-    "@wwtelescope/engine": "thiscommit:2022-04-04:M9auxuE",
+    "@wwtelescope/engine": "thiscommit:2026-04-05:ulYu3lE",
     "@wwtelescope/engine-helpers": "263bedcc26dd2d13d03ba68daece76aa5e16f145",
-    "@wwtelescope/engine-pinia": "thiscommit:2022-11-10:R3G9gH3",
+    "@wwtelescope/engine-pinia": "thiscommit:2026-04-05:imSNAoM",
     "@wwtelescope/engine-types": "263bedcc26dd2d13d03ba68daece76aa5e16f145",
-    "@wwtelescope/research-app-messages": "thiscommit:2022-11-30:h6SkuRt"
+    "@wwtelescope/research-app-messages": "thiscommit:2025-07-16:AvbWk1X",
+    "@wwtelescope/ui-components": "thiscommit:2025-07-11:6supceo"
   },
   "keywords": [
-    "AAS WorldWide Telescope"
+    "WorldWide Telescope"
   ],
   "license": "MIT",
   "name": "@wwtelescope/research-app",

@@ -1,12 +1,13 @@
 {
-  "author": "The AAS WorldWide Telescope Team <wwt@aas.org>",
+  "author": "The WorldWide Telescope Team <hello@worldwidetelescope.org>",
   "bugs": {
-    "email": "wwt@aas.org",
+    "email": "hello@worldwidetelescope.org",
     "url": "https://github.com/WorldWideTelescope/wwt-webgl-engine/issues"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "~6.2.0",
+    "@fortawesome/fontawesome-svg-core": "^6.2.0",
     "@fortawesome/free-solid-svg-icons": "^6.2.0",
+    "@fortawesome/vue-fontawesome": "^3",
     "@wwtelescope/embed-common": "workspace:0.0.0-dev.0",
     "@wwtelescope/engine": "workspace:0.0.0-dev.0",
     "@wwtelescope/engine-pinia": "workspace:0.0.0-dev.0",
@@ -15,7 +16,7 @@
     "vue": "^3",
     "vue3-popper": "^1.5.0"
   },
-  "description": "The AAS WorldWide Telescope as an embeddable iframe.",
+  "description": "The WorldWide Telescope as an embeddable iframe.",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
@@ -31,19 +32,19 @@
     "rimraf": "^3",
     "sass": "^1.26.3",
     "sass-loader": "^13.0.2",
-    "typedoc": "0.23.20",
+    "typedoc": "0.25.1",
     "typescript": "~4.8.4",
     "vue-template-compiler": "~2.6.11",
-    "webpack": "^5.0.0"
+    "webpack": "^5.104.1"
   },
   "homepage": "https://worldwidetelescope.org/home/",
   "internalDepVersions": {
     "@wwtelescope/embed-common": "manual:workspace:>=0.2.0",
-    "@wwtelescope/engine": "1dded843ee47f132873d8b264bdba50badfea25f",
-    "@wwtelescope/engine-pinia": "thiscommit:2022-11-10:R3G9gH3"
+    "@wwtelescope/engine": "thiscommit:2023-09-15:u5a68Lm",
+    "@wwtelescope/engine-pinia": "thiscommit:2024-02-07:wwKwK5K"
   },
   "keywords": [
-    "AAS WorldWide Telescope"
+    "WorldWide Telescope"
   ],
   "license": "MIT",
   "name": "@wwtelescope/embed",

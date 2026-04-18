@@ -289,6 +289,7 @@ export type BaseEngineSetting =
   ["showCrosshairs", boolean] |
   ["showEarthSky", boolean] |
   ["showEcliptic", boolean] |
+  ["showEclipticCircle", boolean] |
   ["showEclipticGrid", boolean] |
   ["showEclipticGridText", boolean] |
   ["showEclipticOverviewText", boolean] |
@@ -355,6 +356,7 @@ const baseEngineSettingTypeInfo = {
   "showCrosshairs/boolean": true,
   "showEarthSky/boolean": true,
   "showEcliptic/boolean": true,
+  "showEclipticCircle/boolean": true,
   "showEclipticGrid/boolean": true,
   "showEclipticGridText/boolean": true,
   "showEclipticOverviewText/boolean": true,
@@ -653,7 +655,7 @@ export function isBaseSpreadSheetLayerSetting(obj: [string, any]): obj is BaseSp
 
 /** Settings specifically for instances of the VoTableLayer type.
  *
- * These are nearly, but not exactly, identical to [[BaseSpreadSheetLayerSetting]].
+ * These are nearly, but not exactly, identical to {@link BaseSpreadSheetLayerSetting}.
  * */
 export type BaseVoTableLayerSetting =
   ["altColumn", number] |
@@ -762,9 +764,10 @@ export function isBaseVoTableLayerSetting(obj: [string, any]): obj is BaseVoTabl
   }
 }
 
-// TypeScript magic to allow fallible reverse mapping of string-valued enums.
+/** This type provides some TypeScript magic to allow fallible reverse mapping
+ * of string-valued enums. */
 // https://stackoverflow.com/q/57922745/3760486
-type StringEnum = { [key: string]: string };
+export type StringEnum = { [key: string]: string };
 
 function keysOf<K extends Record<string,unknown>>(o: K): (keyof K)[];
 function keysOf(o: any) { return Object.keys(o); }  // eslint-disable-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-explicit-any
