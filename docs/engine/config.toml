@@ -1,9 +1,16 @@
-base_url = "//docs.worldwidetelescope.org/webgl-reference/1/"
+base_url = "https://docs.worldwidetelescope.org/webgl-reference/latest/"
 title = "WWT WebGL Engine Reference Manual"
-description = "The AAS WorldWide Telescope WebGL Engine reference manual."
+description = "The WorldWide Telescope WebGL Engine reference manual."
 theme = "wwtguide"
 
+[markdown]
+highlight_code = true
+
 [extra]
-github_base = "//github.com/WorldWideTelescope/wwt-webgl-engine"
-google_analytics_id = "UA-107473046-3"
+github_base = "https://github.com/WorldWideTelescope/wwt-webgl-engine"
+google_analytics_id = "G-D1J49XX0CV"
 stylesheets = ["extras.css"]
+
+# This is temporary - see https://github.com/WorldWideTelescope/wwt-webgl-engine/issues/345
+[link_checker]
+skip_prefixes = ["https://npmjs.com"]

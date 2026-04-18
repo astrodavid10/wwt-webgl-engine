@@ -1,4 +1,4 @@
-// Copyright 2020-2021 the .NET Foundation
+// Copyright 2020-2023 the .NET Foundation
 // Licensed under the MIT License
 //
 // TypeScript definitions for the WWT WebGL engine. Base data types that do not
@@ -156,7 +156,7 @@ export interface EngineSettingsInterface extends EngineSettingsInterfaceRO {
   set_solarSystemMinorOrbits(v: boolean): boolean;
 }
 
-/** Interface for querying [[ImageSetLayer]] settings.
+/** Interface for querying {@link ImageSetLayer} settings.
  *
  * The `RO` is short for "read-only".
  * */
@@ -165,7 +165,7 @@ export interface ImageSetLayerSettingsInterfaceRO extends LayerSettingsInterface
   get_overrideDefaultLayer(): boolean;
 }
 
-/** Interface for controlling [[ImageSetLayer]] settings. */
+/** Interface for controlling {@link ImageSetLayer} settings. */
 export interface ImageSetLayerSettingsInterface extends LayerSettingsInterface, ImageSetLayerSettingsInterfaceRO {
   set_colorMapperName(v: string): string;
   set_overrideDefaultLayer(v: boolean): boolean;
@@ -230,7 +230,7 @@ export interface PolyLineAnnotationSettingsInterface extends AnnotationSettingsI
   set_lineWidth(v: number): number;
 }
 
-/** Interface for querying [[SpreadSheetLayer]] settings.
+/** Interface for querying {@link SpreadSheetLayer} settings.
  *
  * The `RO` is short for "read-only".
  * */
@@ -284,7 +284,7 @@ export interface SpreadSheetLayerSettingsInterfaceRO extends LayerSettingsInterf
   get_zAxisReverse(): boolean;
 }
 
-/** Interface for controlling [[SpreadSheetLayer]] settings. */
+/** Interface for controlling {@link SpreadSheetLayer} settings. */
 export interface SpreadSheetLayerSettingsInterface extends LayerSettingsInterface, SpreadSheetLayerSettingsInterfaceRO {
   set_altColumn(v: number): number;
   set_altType(v: AltTypes): AltTypes;
@@ -335,7 +335,7 @@ export interface SpreadSheetLayerSettingsInterface extends LayerSettingsInterfac
   set_zAxisReverse(v: boolean): boolean;
 }
 
-/** Interface for querying [[VoTableLayer]] settings.
+/** Interface for querying {@link VoTableLayer} settings.
  *
  * The `RO` is short for "read-only".
  * */
@@ -381,7 +381,7 @@ export interface VoTableLayerSettingsInterfaceRO extends LayerSettingsInterfaceR
   get_zAxisReverse(): boolean;
 }
 
-/** Interface for controlling [[VoTableLayer]] settings. */
+/** Interface for controlling {@link VoTableLayer} settings. */
 export interface VoTableLayerSettingsInterface extends LayerSettingsInterface, VoTableLayerSettingsInterfaceRO {
   set_altColumn(v: number): number;
   set_altType(v: AltTypes): AltTypes;
@@ -500,10 +500,10 @@ export class Circle extends Annotation implements CircleAnnotationSettingsInterf
   get_fill(): boolean;
   set_fill(v: boolean): boolean;
   get_fillColor(): string;
-  /** The color is parsed using [[Color.fromName]]. */
+  /** The color is parsed using {@link Color.fromName}. */
   set_fillColor(v: string): string;
   get_lineColor(): string;
-  /** The color is parsed using [[Color.load]]. */
+  /** The color is parsed using {@link Color.load}. */
   set_lineColor(v: string): string;
   /** This parameter currently DOES NOTHING because the WebGL renderer doesn't yet support parametrizable line widths. */
   get_lineWidth(): number;
@@ -599,7 +599,7 @@ export namespace Color {
   /** Create a color from a hex string `AARRGGBB`. */
   export function fromSimpleHex(hex: string): Color;
 
-  /** This function is the same as [[Color.fromName]]. */
+  /** This function is the same as {@link Color.fromName}. */
   export function load(name: string): Color;
 }
 
@@ -643,14 +643,58 @@ export namespace ColorMapContainer {
   export function fromNamedColormap(name: string): ColorMapContainer;
 }
 
+/** A class describing rise/set/transit details */
+export class RiseSetDetails {
+  constructor(bValid: boolean, rise: number, transit: number, set: number, neverRises: boolean);
+  /** Whether the set of information is valid */
+  bValid: boolean;
+  /** The rise time */
+  rise: number;
+  /** The transit time */
+  transit: number;
+  /** The set time */
+  set: number;
+  /** If true, this means that the object never rises/sets */
+  bNeverRises: boolean;
+}
+
+export class AstroCalc {
+  /** Calculate rise/set/transit details given a time, location, and ra/dec values */
+  static getRiseTransitSet(jd: number, lat: number, lng: number,
+                           ra1: number, dec1: number, ra2: number,
+                           dec2: number, ra3: number, dec3: number,
+                           type: number): RiseSetDetails;
+}
+
 export class ConstellationFilter implements ConstellationFilterInterface {
   clone(): ConstellationFilter;
 }
 
 export class Constellations {
   static containment: Constellations;
+  static fullNames: Record<string, string>;
 
   findConstellationForPoint(ra: number, dec: number): string;
+}
+
+export class Coordinates {
+  constructor(ra: number, dec: number);
+  get_RA(): number;
+  set_RA(ra: number): void;
+  get_dec(): number;
+  set_dec(dec: number): void;
+  get_lat(): number;
+  set_lat(lat: number): void;
+  get_lng(): number;
+  set_lng(lng: number): void;
+  get_alt(): number;
+  set_alt(alt: number): void;
+  get_az(): number;
+  set_az(az: number): void;
+  static fromRaDec(raHrs: number, decDeg: number): Coordinates;
+  static fromLatLng(latDeg: number, lngDeg: number): Coordinates;
+  static raDecTo3d(ra: number, dec: number): Vector3d;
+  static equitorialToHorizon(equitorial: Coordinates, location: Coordinates, utc: Date): Coordinates;
 }
 
 /** The full EngineSetting type, which augments engine-types' BaseEngineSetting
@@ -658,13 +702,19 @@ export class Constellations {
  */
 // NOTE: isEngineSetting in engine-helpers needs to be kept in sync.
 export type EngineSetting = BaseEngineSetting |
+["altAzGridColor", Color] |
 ["constellationArtFilter", ConstellationFilter] |
 ["constellationBoundariesFilter", ConstellationFilter] |
 ["constellationBoundryColor", Color] |
 ["constellationFigureColor", Color] |
 ["constellationFiguresFilter", ConstellationFilter] |
 ["constellationNamesFilter", ConstellationFilter] |
-["constellationSelectionColor", Color];
+["constellationSelectionColor", Color] |
+["eclipticColor", Color] |
+["eclipticGridColor", Color] |
+["equatorialGridColor", Color] |
+["galacticGridColor", Color] |
+["precessionChartColor", Color];
 
 export class FitsImage extends WcsImage {
   histogramMaxCount: number;
@@ -768,7 +818,7 @@ export class FolderUp implements Thumbnail {
 /** An simple Version 4 GUID.
  *
  * Note that in WWT, GUID contents are not validated in any way upon creation.
- * The stringification of a [[Guid]] may therefore not follow the UUID4 standard
+ * The stringification of a {@link Guid} may therefore not follow the UUID4 standard
  * form.
  */
 export class Guid {
@@ -992,7 +1042,7 @@ export interface ImagesetLoadedCallback {
 /** Data returned when querying for dynamic catalog data within the current
  * view.
  *
- * See [[RenderContext.getCatalogHipsDataInView]].
+ * See {@link RenderContext.getCatalogHipsDataInView}.
  * */
 export interface InViewReturnMessage {
   /** The table data, as tab-separated values with Windows (\r\n) newlines. */
@@ -1058,23 +1108,23 @@ export namespace LayerManager {
 
   /** Get the hierarchy of layers registered with the engine.
    *
-   * This function returns a dictionary of [[LayerMap]] instances that define
+   * This function returns a dictionary of {@link LayerMap} instances that define
    * the engine’s rendering hierarchy. This top-level dictionary contains only
    * the root reference frames used by the engine — typically, it has only two
    * entries, named `"Sun"` and `"Sky"`. Below the `"Sun"` map (in its
-   * [[LayerMap.childMaps]] field) are found maps for the planets, and below
+   * {@link LayerMap.childMaps} field) are found maps for the planets, and below
    * those are maps for their moons.
    *
-   * See also [[get_allMaps]], which returns the same collection of layer maps
+   * See also {@link get_allMaps}, which returns the same collection of layer maps
    * but in a flattened hierarchy.
    */
   export function get_layerMaps(): { [name: string]: LayerMap }
 
   /** Get the flattened hierarchy of layers registered with the engine.
    *
-   * This function returns a dictionary of [[LayerMap]] instances that define
+   * This function returns a dictionary of {@link LayerMap} instances that define
    * the engine’s rendering hierarchy. The dictionary contains an entry for
-   * every [[LayerMap]] registered with the engine. This is unlike the
+   * every {@link LayerMap} registered with the engine. This is unlike the
    * `get_layerMaps()` interface, which only returns the “root” layer maps.
    * Because there is a layer map for every solar system planet and every known
    * moon thereof, this dictionary is quite large.
@@ -1086,7 +1136,7 @@ export namespace LayerManager {
   /** Get the collection of all layers registered with the engine.
    *
    * The layer "list" is really an unordered dictionary of all registered
-   * layers, keyed by each layer's stringified GUID. Given a [[Layer]] object,
+   * layers, keyed by each layer's stringified GUID. Given a {@link Layer} object,
    * you can get its key with `layer.id.toString()`. This list includes layers
    * that have been registered for all engine rendering modes, while only one
    * rendering mode is currently active at a time. So there are inevitably
@@ -1101,16 +1151,16 @@ export namespace LayerManager {
   export function createSpreadsheetLayer(frame: string, name: string, data: string): SpreadSheetLayer;
   export function deleteLayerByID(id: Guid, removeFromParent: boolean, updateTree: boolean): void;
 
-  /** Add a new [[VoTableLayer]] to the manager with a default plot type.
+  /** Add a new {@link VoTableLayer} to the manager with a default plot type.
    *
-   * This is the same as [[addVoTableLayerWithPlotType]] with the plot type
+   * This is the same as {@link addVoTableLayerWithPlotType} with the plot type
    * defaulted to `PlotTypes.Circle`.
    * */
   export function addVoTableLayer(table: VoTable, title: string): VoTableLayer;
 
-  /** Add a new [[VoTableLayer]] to the manager.
+  /** Add a new {@link VoTableLayer} to the manager.
    *
-   * @param table The [[VoTable]] that will underlie the new layer.
+   * @param table The {@link VoTable} that will underlie the new layer.
    * @param title The name that will be given to the new layer.
    * @param plotType The point plotting type that the new layer will use.
    * @returns The newly-created layer.
@@ -1123,15 +1173,15 @@ export namespace LayerManager {
 }
 
 /** An alias for the type implicitly defined by the static
- * [[LayerManager]] namespace. */
+ * {@link LayerManager} namespace. */
 export type LayerManagerObject = typeof LayerManager;
 
 /** A collection of layers in a hierarchical tree.
  *
- * Each map includes a collection of zero or more [[Layer]]s rooted in its
- * reference frame (the [[layers]] list) as well as a collection of zero or more
- * child [[LayerMap]]s, which have reference frames that are defined relative to
- * this layer's reference frame (the [[childMaps]] dictionary).
+ * Each map includes a collection of zero or more {@link Layer}s rooted in its
+ * reference frame (the {@link layers} list) as well as a collection of zero or more
+ * child {@link LayerMap}s, which have reference frames that are defined relative to
+ * this layer's reference frame (the {@link childMaps} dictionary).
  **/
 export class LayerMap {
   childMaps: { [childName: string]: LayerMap };
@@ -1164,6 +1214,8 @@ export class Place implements Thumbnail {
   set_annotation(v: string): string;
   get_backgroundImageset(): Imageset | null;
   set_backgroundImageset(v: Imageset | null): Imageset | null;
+  get_camParams(): CameraParameters;
+  set_camParams(v: CameraParameters): CameraParameters;
   get_children(): Thumbnail[];
   get_classification(): Classification;
   set_classification(v: Classification): Classification;
@@ -1183,6 +1235,7 @@ export class Place implements Thumbnail {
   set_lat(v: number): number;
   get_lng(): number;
   set_lng(v: number): number;
+  get_location3d(): Vector3d;
   get_magnitude(): number;
   set_magnitude(v: number): number;
   get_name(): string;
@@ -1211,6 +1264,7 @@ export class Place implements Thumbnail {
   set_zoomLevel(v: number): number;
 
   updatePlanetLocation(jNow: number): void;
+  asXml(elementName?: string): string;
 }
 
 
@@ -1219,10 +1273,10 @@ export class Poly extends Annotation implements PolyAnnotationSettingsInterface 
   get_fill(): boolean;
   set_fill(v: boolean): boolean;
   get_fillColor(): string;
-  /** The color is parsed using [[Color.fromName]]. */
+  /** The color is parsed using {@link Color.fromName}. */
   set_fillColor(v: string): string;
   get_lineColor(): string;
-  /** The color is parsed using [[Color.load]]. */
+  /** The color is parsed using {@link Color.load}. */
   set_lineColor(v: string): string;
   /** This parameter currently DOES NOTHING because the WebGL renderer doesn't yet support parametrizable line widths. */
   get_lineWidth(): number;
@@ -1245,7 +1299,7 @@ export type PolyAnnotationSetting =
 /** An annotation composed of a sequence of lines. */
 export class PolyLine extends Annotation implements PolyLineAnnotationSettingsInterface {
   get_lineColor(): string;
-  /** The color is parsed using [[Color.load]]. */
+  /** The color is parsed using {@link Color.load}. */
   set_lineColor(v: string): string;
   /** This parameter currently DOES NOTHING because the WebGL renderer doesn't yet support parametrizable line widths. */
   get_lineWidth(): number;
@@ -1275,20 +1329,20 @@ export interface ReadyEventCallback {
  *
  * ### The Camera
  *
- * - [[viewCamera]]
- * - [[targetCamera]]
+ * - {@link viewCamera}
+ * - {@link targetCamera}
  *
  * ### Core Datasets
  *
- * - [[get_backgroundImageset]], [[set_backgroundImageset]]
- * - [[get_foregroundImageset]], [[set_foregroundImageset]]
- * - [[get_catalogHipsImagesets]]
- * - [[addCatalogHips]], [[removeCatalogHips]]
- * - [[getCatalogHipsDataInView]]
+ * - {@link get_backgroundImageset}, {@link set_backgroundImageset}
+ * - {@link get_foregroundImageset}, {@link set_foregroundImageset}
+ * - {@link get_catalogHipsImagesets}
+ * - {@link addCatalogHips}, {@link removeCatalogHips}
+ * - {@link getCatalogHipsDataInView}
  *
  * ### The Viewport
  *
- * - [[width]], [[height]]
+ * - {@link width}, {@link height}
  */
 export class RenderContext {
   height: number;
@@ -1311,7 +1365,7 @@ export class RenderContext {
 
   /** Get a list of all active "catalog HiPS" imagesets.
    *
-   * These are the items that have been added with the [[addCatalogHips]] API.
+   * These are the items that have been added with the {@link addCatalogHips} API.
    *
    * @returns The list of active catalog HiPS imagesets
    * */
@@ -1339,9 +1393,9 @@ export class RenderContext {
 
   /** Add a new "catalog HiPS" imageset to the view.
    *
-   * Each catalog HiPS imageset is associated with a [[SpreadSheetLayer]] that
+   * Each catalog HiPS imageset is associated with a {@link SpreadSheetLayer} that
    * is updated with dynamically-loaded data as the WWT camera moves around.
-   * This API adds this layer to the [[LayerManager]] and invokes the *onLoad*
+   * This API adds this layer to the {@link LayerManager} and invokes the *onLoad*
    * callback when the imageset's initial loading has completed.
    *
    * The caller must ensure that the *imageset* argument actually does
@@ -1354,7 +1408,7 @@ export class RenderContext {
 
   /** Fetch the subset of catalog HiPS data contained within the current view.
    *
-   * The imageset should have been loaded with the [[addCatalogHips]] call. The
+   * The imageset should have been loaded with the {@link addCatalogHips} call. The
    * *limit* parameter should almost always be true, since if false the
    * data-fetch operation can potentially attempt to download and return
    * gigabytes of data.
@@ -1367,7 +1421,7 @@ export class RenderContext {
 
   /** Remove a "catalog HiPS" imageset from the view.
    *
-   * The argument must be an imageset previously passed to [[addCatalogHips]].
+   * The argument must be an imageset previously passed to {@link addCatalogHips}.
    *
    * @param imageset The imageset to remove.
    * */
@@ -1430,8 +1484,8 @@ export class ScriptInterface {
   /** Deregister a "ready" callback. */
   remove_ready(callback: ReadyEventCallback): void;
 
-  /** Register a callback to be called when [[WWTControl.loadTour]] or
-   * [[WWTControl.playTour]] have finished loading a tour.
+  /** Register a callback to be called when {@link WWTControl.loadTour} or
+   * {@link WWTControl.playTour} have finished loading a tour.
    */
   add_tourReady(callback: ScriptInterfaceCallback): void;
 
@@ -1444,14 +1498,14 @@ export class ScriptInterface {
    * an XML document in the [WTML collection][wtml] format. Any `ImageSet`
    * entries in the collection, or `Place` entries containing image sets, will
    * be added to the WWT instance’s list of available imagery. Subsequent calls
-   * to functions like [[WWTControl.setForegroundImageByName]] will be able to
+   * to functions like {@link WWTControl.setForegroundImageByName} will be able to
    * locate the new imagesets and display them to the user.
    *
    * If the URL is not accessible due to CORS restrictions, the request will
    * automatically be routed through the WWT’s CORS proxying service.
    *
    * After the collection is successfully loaded, a `collectionLoaded` event
-   * will be issued, which you can listen for using the [[add_collectionLoaded]]
+   * will be issued, which you can listen for using the {@link add_collectionLoaded}
    * method.
    *
    * [wtml]: https://docs.worldwidetelescope.org/data-guide/1/data-file-formats/collections/
@@ -1471,7 +1525,7 @@ export class ScriptInterface {
   /** Initiate the loading of a image set or single-file FITS layer.
    *
    * If the specified URL already exists in the image set collection, i.e. it
-   * has previously been created with [[loadImageCollection]], then this image set
+   * has previously been created with {@link loadImageCollection}, then this image set
    * is added to the view.
    *
    * If the specified URL is pointing to a FITS file, it will be downloaded and parsed.
@@ -1502,19 +1556,19 @@ export class ScriptInterface {
 
   /** Create a circle annotation.
    *
-   * It is *not* automatically added to the renderer. Use [[addAnnotation]] to do that.
+   * It is *not* automatically added to the renderer. Use {@link addAnnotation} to do that.
    */
   createCircle(fill: boolean): Circle;
 
   /** Create a polygonal annotation.
    *
-   * It is *not* automatically added to the renderer. Use [[addAnnotation]] to do that.
+   * It is *not* automatically added to the renderer. Use {@link addAnnotation} to do that.
    */
   createPolygon(fill: boolean): Poly;
 
   /** Create a multi-line annotation.
    *
-   * It is *not* automatically added to the renderer. Use [[addAnnotation]] to do that.
+   * It is *not* automatically added to the renderer. Use {@link addAnnotation} to do that.
    */
   createPolyLine(unused: boolean): PolyLine;
 
@@ -1528,7 +1582,7 @@ export class ScriptInterface {
   clearAnnotations(): void;
 }
 
-/** A generic [[ScriptInterface]] callback. */
+/** A generic {@link ScriptInterface} callback. */
 export interface ScriptInterfaceCallback {
   (si: ScriptInterface): void;
 }
@@ -1567,6 +1621,8 @@ export class Settings implements EngineSettingsInterface {
   set_showConstellationSelection(v: boolean): boolean;
   get_showEcliptic(): boolean;
   set_showEcliptic(v: boolean): boolean;
+  get_showEclipticCircle(): boolean;
+  set_showEclipticCircle(v: boolean): boolean;
   get_showElevationModel(): boolean;
   set_showElevationModel(v: boolean): boolean;
   get_showFieldOfView(): boolean;
@@ -1600,26 +1656,40 @@ export class Settings implements EngineSettingsInterface {
   set_solarSystemScale(v: number): number;
   get_showEquatorialGridText(): boolean;
   set_showEquatorialGridText(v: boolean): boolean;
+  get_equatorialGridColor(): Color;
+  set_equatorialGridColor(v: Color): Color;
   get_showGalacticGrid(): boolean;
   set_showGalacticGrid(v: boolean): boolean;
   get_showGalacticGridText(): boolean;
   set_showGalacticGridText(v: boolean): boolean;
+  get_galacticGridColor(): Color;
+  set_galacticGridColor(v: Color): Color;
   get_showEclipticGrid(): boolean;
   set_showEclipticGrid(v: boolean): boolean;
   get_showEclipticGridText(): boolean;
   set_showEclipticGridText(v: boolean): boolean;
+  get_eclipticGridColor(): Color;
+  set_eclipticGridColor(v: Color): Color;
   get_showEclipticOverviewText(): boolean;
   set_showEclipticOverviewText(v: boolean): boolean;
+  get_eclipticColor(): Color;
+  set_eclipticColor(v: Color): Color;
   get_showAltAzGrid(): boolean;
   set_showAltAzGrid(v: boolean): boolean;
   get_showAltAzGridText(): boolean;
   set_showAltAzGridText(v: boolean): boolean;
+  get_altAzGridColor(): Color;
+  set_altAzGridColor(v: Color): Color;
   get_showPrecessionChart(): boolean;
   set_showPrecessionChart(v: boolean): boolean;
+  get_precessionChartColor(): Color;
+  set_precessionChartColor(v: Color): Color;
   get_showConstellationPictures(): boolean;
   set_showConstellationPictures(v: boolean): boolean;
   get_showConstellationLabels(): boolean;
   set_showConstellationLabels(v: boolean): boolean;
+  get_constellationLabelsHeight(): number;
+  set_constellationLabelsHeight(v: number): number;
   get_solarSystemCMB(): boolean;
   set_solarSystemCMB(v: boolean): boolean;
   get_solarSystemMinorPlanets(): boolean;
@@ -1662,12 +1732,14 @@ export class Settings implements EngineSettingsInterface {
   set_planetOrbitsFilter(v: number): number;
   get_constellations(): boolean;
   set_constellations(v: boolean): boolean;
+
+  static get_active(): Settings;
 }
 
 export namespace SpaceTimeController {
   /** Have the WWT clock immediately lock onto to the system clock.
    *
-   * This function not only has the effect of calling [[set_syncToClock]] with a
+   * This function not only has the effect of calling {@link set_syncToClock} with a
    * true argument, it also sets the offset between the two clocks to be zero.
    */
   export function syncTime(): void;
@@ -1682,6 +1754,13 @@ export namespace SpaceTimeController {
    */
   export function set_now(date: Date): Date;
 
+  /** Get the current internal time of the WWT clock as a JavaScript Date.
+   *
+   * In some situations (such as frame-dumping mode for video capture), this will
+   * not be in sync with the current actual time.
+   */
+  export function get_metaNow(): Date;
+
   /** Get whether the WWT clock moves at the same rate as the system clock.
    *
    * Note that this value may be true but there may still be a constant offset
@@ -1695,7 +1774,7 @@ export namespace SpaceTimeController {
    * @returns The input argument.
    *
    * If set to false, the WWT clock will stop advancing, ignoring the value of
-   * [[get_timeRate]]. If set to true, the WWT clock will resume advancing from
+   * {@link get_timeRate}. If set to true, the WWT clock will resume advancing from
    * where it left off, possibly inducing an offset between the WWT clock and
    * the system clock.
    */
@@ -1718,7 +1797,7 @@ export namespace SpaceTimeController {
    * that time in WWT proceeds 10 times faster than system time. The rate may be
    * negative.
    *
-   * Do not set the rate to zero. Instead, call [[set_syncToClock]] with a false
+   * Do not set the rate to zero. Instead, call {@link set_syncToClock} with a false
    * argument.
    */
   export function set_timeRate(rate: number): number;
@@ -1742,7 +1821,7 @@ export namespace SpaceTimeController {
    * @param jdate The Julian date, usually a number around 2.4 million.
    * @returns A Javascript datetime.
    *
-   * See [[get_jNow]] for commentary on this conversion, which is not rigorously
+   * See {@link get_jNow} for commentary on this conversion, which is not rigorously
    * correct and can only be trusted to granularities of less than around a
    * minute.
    */
@@ -1753,7 +1832,7 @@ export namespace SpaceTimeController {
    * @param date The datetime.
    * @returns A Julian date.
    *
-   * See [[get_jNow]] for commentary on this conversion, which is not rigorously
+   * See {@link get_jNow} for commentary on this conversion, which is not rigorously
    * correct and can only be trusted to granularities of less than around a
    * minute.
    */
@@ -1761,7 +1840,7 @@ export namespace SpaceTimeController {
 }
 
 /** An alias for the type implicitly defined by the static
- * [[SpaceTimeController]] namespace. */
+ * {@link SpaceTimeController} namespace. */
 export type SpaceTimeControllerObject = typeof SpaceTimeController;
 
 
@@ -1877,7 +1956,7 @@ export class SpreadSheetLayer extends Layer implements SpreadSheetLayerSettingsI
    */
   getTableDataInView(): string;
 
-  /** Guess header semantics using a [[VoTable]] with similarly named columns as
+  /** Guess header semantics using a {@link VoTable} with similarly named columns as
    * a reference. This can exploit the typed "UCD" annotations associated with
    * such tables.
    *
@@ -1893,6 +1972,12 @@ export class SpreadSheetLayer extends Layer implements SpreadSheetLayerSettingsI
  * engine itself.
  */
 export type SpreadSheetLayerSetting = LayerSetting | BaseSpreadSheetLayerSetting;
+
+/** A class that represents the current cache of loaded tiles. */
+export class TileCache {
+  /** Clear the current cache of tiles */
+  static clearCache(): void;
+}
 
 /** A WWT tour. */
 export class TourDocument {
@@ -2008,15 +2093,15 @@ export class TourEditTab {
 }
 
 export interface TourEndedCallback {
-  /** Called when a [[TourPlayer]] has finished playing its tour. */
+  /** Called when a {@link TourPlayer} has finished playing its tour. */
   (player: TourPlayer): void;
 }
 
 
 /** An object that manages the playback of a tour.
  *
- * Each [[TourPlayer]] may be associated with an underlying [[TourDocument]],
- * which defines the tour in question. It may be accessed using the [[get_tour]]
+ * Each {@link TourPlayer} may be associated with an underlying {@link TourDocument},
+ * which defines the tour in question. It may be accessed using the {@link get_tour}
  * method.
  */
 export class TourPlayer implements UiController {
@@ -2026,10 +2111,10 @@ export class TourPlayer implements UiController {
   /** Set the tour associated with this tour player. */
   set_tour(tour: TourDocument | null): TourDocument | null;
 
-  /** Get whether this player will leave slide [[Settings]] applied when it stops. */
+  /** Get whether this player will leave slide {@link Settings} applied when it stops. */
   get_leaveSettingsWhenStopped(): boolean;
 
-  /** Set whether this player will leave slide [[Settings]] applied when it stops. */
+  /** Set whether this player will leave slide {@link Settings} applied when it stops. */
   set_leaveSettingsWhenStopped(v: boolean): boolean;
 
   /** Force the currently playing tour to advance to the next slide. */
@@ -2086,7 +2171,7 @@ export namespace TourPlayer {
 }
 
 
-/** A stop in a [[TourDocument]]. */
+/** A stop in a {@link TourDocument}. */
 export class TourStop implements SettingsInterface {
   get_description(): string;
   set_description(desc: string): string;
@@ -2182,6 +2267,40 @@ export class TourStop implements SettingsInterface {
  * */
 export interface UiController { }
 
+/** A helper class for rewriting URLs. We might need to proxy for CORS headers
+ * and/or HTTPS support, *and* we sometimes also want to change the host and/or
+ * path.
+* */
+export namespace URLHelpers {
+  /** Rewrite URL to deal with CORS issues, HTTPS issues, or similar issues.
+ *
+ * @param url The URL to be rewritten.
+ * @param rwmode URLRewriteMode Either AsIfAbsolute or OriginRelative.
+ * AsIfAbsolute if the input URL should be treated as an absolute URL.
+ * OriginRelative if the input URL is relative to the browser origin.
+ * @returns The new URL.
+ * */
+  export function rewrite(url: string, rwmode: URLRewriteMode): string;
+  export const singleton: URLHelpers;
+}
+
+export type URLHelpers = typeof URLHelpers;
+
+export enum URLRewriteMode {
+  AsIfAbsolute = 0, // act as if this URL is absolute even if it is missing a domain
+  OriginRelative = 1, // if this URL is relative, treat it as relative to the browser origin
+}
+
+export class Vector3d {
+  x: number;
+  y: number;
+  z: number;
+
+  length(): number;
+
+  static create(x: number, y: number, z: number): Vector3d;
+  static subtractVectors(left: Vector3d, right: Vector3d): Vector3d;
+}
 
 /** A VOTable dataset.
  *
@@ -2215,9 +2334,9 @@ export namespace VoTable {
 }
 
 
-/** A [[VoTable]] rendered as a layer.
+/** A {@link VoTable} rendered as a layer.
  *
- * This class is highly similar to [[SpreadSheetLayer]], and the latter class is
+ * This class is highly similar to {@link SpreadSheetLayer}, and the latter class is
  * generally more featureful. It should be preferred when possible.
  */
 export class VoTableLayer extends Layer implements VoTableLayerSettingsInterface {
@@ -2302,7 +2421,7 @@ export class VoTableLayer extends Layer implements VoTableLayerSettingsInterface
 }
 
 export namespace VoTableLayer {
-  /** Create a new [[VoTableLayer]] for the specified [[VoTable]]. */
+  /** Create a new {@link VoTableLayer} for the specified {@link VoTable}. */
   export function create(table: VoTable, plotType: PlotTypes): VoTableLayer;
 }
 
@@ -2386,56 +2505,66 @@ export class WcsImage {
 /** The primary WWT engine state object.
  *
  * The main state of the WWT rendering engine is stored in a global
- * [[WWTControl]] singleton object. As such, this class has APIs relating to
- * nearly every single feature offered by WWT. The [[ScriptInterface]] object
+ * {@link WWTControl} singleton object. As such, this class has APIs relating to
+ * nearly every single feature offered by WWT. The {@link ScriptInterface} object
  * adds a few additional features, but it primarily delegates its work to this
  * class.
  *
  * ### Rendering
  *
- * - [[renderContext]], the core renderer state
- * - [[renderType]], the current renderer mode
- * - [[renderOneFrame]], a method to render a single frame
+ * - {@link renderContext}, the core renderer state
+ * - {@link renderType}, the current renderer mode
+ * - {@link renderOneFrame}, a method to render a single frame
  *
  * ### UI Plumbing
  *
- * - [[uiController]], special UI state
+ * - {@link uiController}, special UI state
  *
  * ### Basic Camera Controls
  *
- * - [[gotoRADecZoom]]
- * - [[gotoTarget]]
- * - [[zoom]]
+ * - {@link gotoRADecZoom}
+ * - {@link gotoTarget}
+ * - {@link zoom}
  *
  * ### Core Datasets
  *
- * - [[getImagesetByName]]
- * - [[getDefaultImageset]]
- * - [[setBackgroundImageByName]]
- * - [[setForegroundImageByName]]
- * - [[addCatalogHipsByName]], [[addCatalogHipsByNameWithCallback]]
- * - [[removeCatalogHipsByName]]
+ * - {@link getImagesetByName}
+ * - {@link getDefaultImageset}
+ * - {@link setBackgroundImageByName}
+ * - {@link setForegroundImageByName}
+ * - {@link addCatalogHipsByName}, {@link addCatalogHipsByNameWithCallback}
+ * - {@link removeCatalogHipsByName}
  *
  * ### Tours
  *
- * - [[loadTour]]
- * - [[playTour]]
- * - [[playCurrentTour]]
- * - [[pauseCurrentTour]]
- * - [[stopCurrentTour]]
+ * - {@link loadTour}
+ * - {@link playTour}
+ * - {@link playCurrentTour}
+ * - {@link pauseCurrentTour}
+ * - {@link stopCurrentTour}
  *
  * ### Other Settings
  *
- * - [[set_zoomMax]], [[set_zoomMin]]
- * - [[setSolarSystemMaxZoom]], [[setSolarSystemMinZoom]]
+ * - {@link set_zoomMax}, {@link set_zoomMin}
+ * - {@link setSolarSystemMaxZoom}, {@link setSolarSystemMinZoom}
  *
  * */
 export class WWTControl {
+  /** Add an imageset directly into the engine's database.
+   *
+   * If another imageset with the same image URL is already loaded, this is a
+   * no-op, and the pre-existing imageset is returned. The difference might
+   * matter for future name-based lookups.
+   *
+   * @returns Either the input imageset, or the pre-existing imageset in
+   * the no-op condition.
+   */
+  static addImageSetToRepository(img: Imageset): Imageset;
 
   /** The image sets that have been loaded into the engine */
   static getImageSets(): Imageset[];
 
-  /** Special UI state that may be active such as a [[TourPlayer]]. */
+  /** Special UI state that may be active such as a {@link TourPlayer}. */
   uiController: UiController | null;
 
   /** State of the WWT rendering engine. */
@@ -2444,7 +2573,7 @@ export class WWTControl {
   /** The current mode that the renderer is in.
    *
    * This value tracks the type of the background imageset. It is updated at the
-   * beginning of [[renderOneFrame]], not immediately upon alteration of the
+   * beginning of {@link renderOneFrame}, not immediately upon alteration of the
    * background image set.
    */
   renderType: ImageSetType;
@@ -2457,7 +2586,7 @@ export class WWTControl {
    * The current reference frame defines the physical coordinates of the view
    * and the list of layers that are included in the current rendering process.
    * The return value of this function can be indexed into
-   * [[LayerManager.get_allMaps]] to find the root [[LayerMap]] that is used to
+   * {@link LayerManager.get_allMaps} to find the root {@link LayerMap} that is used to
    * determine what gets rendered in the current view.
    *
    * In standard 2D sky mode, the return value will be `"Sky"`.
@@ -2481,18 +2610,30 @@ export class WWTControl {
    * @param zoom The target zoom level (see below)
    * @param instant Whether to snap the view instantly or move gradually.
    * @param roll_deg Optional, The roll of the camera, in degrees.
+   * @param duration Optional, The duration of the motion, in seconds.
    *
    * If `instant` is true or the commanded camera position is extremely close to the
    * current camera position, the view will update instantly. Otherwise it will
-   * scroll there smoothly, taking an unpredictable amount of time to arrive.
+   * scroll there smoothly. If no duration is specified, it will take an unpredictable
+   * amount of time to arrive.
    *
    * The zoom level is the height of the viewport in degrees, times six.
    *
    * Navigating the view in this way ends any "tracking" status of the current view.
    */
-  gotoRADecZoom(ra_hours: number, dec_deg: number, zoom: number, instant: boolean, roll_deg?: number): void;
+  gotoRADecZoom(ra_hours: number, dec_deg: number, zoom: number, instant: boolean, roll_deg?: number, duration?: number): void;
 
-  /** Start navigating the view to the specified [[Place]].
+  /** Returns how long moving to the given position will take, in seconds.
+ *
+ * @param ra_hours The target right ascension, in hours.
+ * @param dec_deg The target declination, in degrees.
+ * @param zoom The target zoom level (see below)
+ * @param roll_deg Optional, The roll of the camera, in degrees.
+ *
+ */
+  timeToRADecZoom(ra_hours: number, dec_deg: number, zoom: number, roll_deg?: number): number;
+
+  /** Start navigating the view to the specified {@link Place}.
    *
    * @param place The destination of the view
    * @param noZoom If true, the zoom, angle, and rotation of the target camera
@@ -2501,10 +2642,11 @@ export class WWTControl {
    * @param instant If true, the view camera will immediately snap to the
    * destination position. Otherwise, it will gradually move.
    * @param trackObject If true, the camera will continue tracking the view
+   * @param duration If specified, the duration of the motion (in seconds)
    * target as it moves with the progression of the WWT internal clock.
    *
    */
-  gotoTarget(place: Place, noZoom: boolean, instant: boolean, trackObject: boolean): void;
+  gotoTarget(place: Place, noZoom: boolean, instant: boolean, trackObject: boolean, duration?: number): void;
 
   /** Change the zoom of the current view. The change is not necessarily
    * instantaneous, depending on whether the "smooth pan" setting is activated.
@@ -2539,7 +2681,7 @@ export class WWTControl {
    * This function searches the control’s database of imagery and returns a
    * "default" imageset for the given settings. First preference is given to an
    * imageset with matching `type` and `bandpass` that has a
-   * [[Imageset.get_defaultSet]] of true (corresponding to the `StockSet` XML
+   * {@link Imageset.get_defaultSet} of true (corresponding to the `StockSet` XML
    * attribute). If no such set exists, the first set with matching `type` and
    * `bandpass` is returned, regardless of its `defaultSet` setting. If there is
    * still no such result, the first imageset with the same `type`, ignoring
@@ -2557,9 +2699,9 @@ export class WWTControl {
    * This function may change the viewer mode (e.g. sky, panorama, 3D solar
    * system, etc.). To avoid display artifacts when switching to a planetary
    * mode, set the foreground imageset to the same value using
-   * [[setForegroundImageByName]].
+   * {@link setForegroundImageByName}.
    *
-   * The imageset lookup is done using [[getImagesetByName]]. If the imageset is
+   * The imageset lookup is done using {@link getImagesetByName}. If the imageset is
    * not found, this function silently does nothing.
    *
    * @param imagesetName: The imageset name.
@@ -2568,7 +2710,7 @@ export class WWTControl {
 
   /** Set the foreground imageset using a name-based lookup.
    *
-   * The imageset lookup is done using [[getImagesetByName]]. If the imageset is
+   * The imageset lookup is done using {@link getImagesetByName}. If the imageset is
    * not found, this function silently does nothing.
    *
    * Note that this function does not alter the camera in any way. You will need
@@ -2581,32 +2723,32 @@ export class WWTControl {
 
   /** Add a "catalog HiPS" dataset to the current view.
    *
-   * The [[SpreadSheetLayer]] of data associated with this special imageset will
-   * be added to the [[LayerManager]]. The caller must know *a priori* that the
+   * The {@link SpreadSheetLayer} of data associated with this special imageset will
+   * be added to the {@link LayerManager}. The caller must know *a priori* that the
    * named imageset indeed corresponds to a catalog HiPS dataset.
    *
-   * See also [[addCatalogHipsByName]], [[addCatalogHipsByNameWithCallback]].
+   * See also {@link addCatalogHipsByName}, {@link addCatalogHipsByNameWithCallback}.
    * */
   addCatalogHips(imageset: Imageset): void;
 
   /** Add a "catalog HiPS" dataset to the current view, by name.
    *
    * The catalog HiPS is loaded from the engine’s listing of recognized
-   * imagesets using the [[getImagesetByName]] mechanism. The
-   * [[SpreadSheetLayer]] of data associated with this special imageset will be
-   * added to the [[LayerManager]]. The caller must know *a priori* that the
+   * imagesets using the {@link getImagesetByName} mechanism. The
+   * {@link SpreadSheetLayer} of data associated with this special imageset will be
+   * added to the {@link LayerManager}. The caller must know *a priori* that the
    * named imageset indeed corresponds to a catalog HiPS dataset.
    *
-   * See also [[addCatalogHips]], [[addCatalogHipsByNameWithCallback]].
+   * See also {@link addCatalogHips}, {@link addCatalogHipsByNameWithCallback}.
    * */
   addCatalogHipsByName(name: string): void;
 
   /** Add a "catalog HiPS" dataset to the current view, by name, with a
    * callback.
    *
-   * Same as [[addCatalogHipsByName]], with the addition that the *onLoad*
+   * Same as {@link addCatalogHipsByName}, with the addition that the *onLoad*
    * callback will be called once the initial data loading of the catalog HiPS
-   * data has completed. See also [[addCatalogHips]].
+   * data has completed. See also {@link addCatalogHips}.
    * */
   addCatalogHipsByNameWithCallback(name: string, onLoad: Action): void;
 
@@ -2622,9 +2764,9 @@ export class WWTControl {
   /** Start loading the tour stored at the specified URL.
    *
    * When loading is complete, a `tourReady` event will be issued, which you can
-   * listen for using the [[add_tourReady]] method. You can then get access to a
-   * [[TourPlayer]] by casting the [[uiController]] property of this
-   * [[WWTControl]]:
+   * listen for using the {@link ScriptInterface.add_tourReady} method. You can
+   * then get access to a {@link TourPlayer} by casting the {@link uiController}
+   * property of this {@link WWTControl}:
    *
    * ```
    * if (ctl.uiController !== null && ctl.uiController instanceof TourPlayer) {
@@ -2638,9 +2780,9 @@ export class WWTControl {
   /** Load the tour stored at the specified URL and start playing it.
    *
    * When loading is complete, a `tourReady` event will be issued, which you can
-   * listen for using the [[add_tourReady]] method.
+   * listen for using the {@link ScriptInterface.add_tourReady} method.
    *
-   * See also [[loadTour]], which provides more flexibility to the caller.
+   * See also {@link loadTour}, which provides more flexibility to the caller.
    */
   playTour(url: string): void;
 
@@ -2655,6 +2797,28 @@ export class WWTControl {
 
   /** Create a new tour */
   createTour(name: string): TourDocument;
+
+  /** Capture the current frame as an image.
+   *
+   * @param blobReady A callback function to execute on the `Blob` representing
+   * the captured image.
+   * @param width The desired image width.
+   * @param height The desired image height.
+   * @param format The desired image format (e.g. `"image/jpeg"`)
+  */
+  captureFrame(blobReady: BlobCallback, width: number, height: number, format: string): void;
+
+  /** Capture a video as a sequence of images
+   *
+   * @param blobReady A callback function to execute on each `Blob` representing
+   * a captured frame.
+   * @param width The desired frame width.
+   * @param height The desired frame height.
+   * @param framesPerSecond The number of frames captured per second.
+   * @param totalFrames The total number of frames to capture.
+   * @param format The desired image format (e.g. `"image/jpeg"`)
+  */
+  captureVideo(blobReady: BlobCallback, width: number, height: number, framesPerSecond: number, totalFrames: number, format: string): void;
 
   /** Set the maximum allowed user zoom level in 3D ("solar system") mode.
    *
@@ -2701,10 +2865,10 @@ export class WWTControl {
 }
 
 export namespace Wtml {
-  /** Load a WTML collection and register its imagesets with the [[WWTControl]].
+  /** Load a WTML collection and register its imagesets with the {@link WWTControl}.
    *
    * This function launches an asychronous operation to retrieve the collection
-   * data from the specified URL. As such, the returned [[Folder]] object will
+   * data from the specified URL. As such, the returned {@link Folder} object will
    * start out blank and unpopulated. Its contents will be filled in from the
    * parsed data at some point in the future, at which point the `complete`
    * callback will be called.
@@ -2713,7 +2877,7 @@ export namespace Wtml {
    * @param complete A callback to be called after the folder (and all child
    * folders, if loadChildFolders is set to true) is successfully loaded.
    * @param loadChildFolders Optional, When true, this method will recursively
-   * download and unpack all [[Folder]]s contained in the original WTML file.
+   * download and unpack all {@link Folder}s contained in the original WTML file.
    * Defaults to false.
    * @returns A folder object that will be populated asynchronously.
    */
@@ -2723,24 +2887,41 @@ export namespace Wtml {
 export namespace WWTControl {
   /** Initialize the WWT engine and launch its rendering loop.
    *
-   * @param divId The `id` of the DOM element into which the WWT WebGL surface
-   * will be inserted.
-   * @return A handle to a [[ScriptInterface]] associated with this engine
-   * instance.
+   * While this function is maintained for backwards compatibility, modern users
+   * should use the {@link WWTControlBuilder} class to initialize and instantiate
+   * the engine.
    *
    * The engine is not immediately usable since it must perform initialization
    * that includes fetching resources from the network.
+   *
+   * @param divId The `id` of the DOM element into which the WWT WebGL surface
+   * will be inserted.
+   * @return A handle to a {@link ScriptInterface} associated with this engine
+   * instance.
    */
   export function initControl(divId: string): ScriptInterface;
 
   /** Initialize the WWT engine with defaults.
    *
-   * The same as [[initControl6]], with `startLat` and `startLng` defaulting to
+   * While this function is maintained for backwards compatibility, modern users
+   * should use the {@link WWTControlBuilder} class to initialize and instantiate
+   * the engine.
+   *
+   * The same as {@link initControl6}, with `startLat` and `startLng` defaulting to
    * 0, `startZoom` defaulting to 360, and `startMode` defaulting to `"Sky"`.
    */
   export function initControl2(divId: string, startRenderLoop: boolean): ScriptInterface;
 
   /** Initialize the WWT engine.
+   *
+   * While this function is maintained for backwards compatibility, modern users
+   * should use the {@link WWTControlBuilder} class to initialize and instantiate
+   * the engine.
+   *
+   * The engine is not immediately usable since it must perform initialization
+   * that includes fetching resources from the network.
+   *
+   * If the value of `startMode` is not recognized, Sky mode is assumed.
    *
    * @param divId The `id` of the DOM element into which the WWT WebGL surface
    * will be inserted.
@@ -2752,18 +2933,9 @@ export namespace WWTControl {
    * degrees.
    * @param startZoom The starting zoom level for the view.
    * @param startMode The starting mode for the view: one of `"earth"` or
-   * `"Sky"`.
-   * @return A handle to a [[ScriptInterface]] associated with this engine
+   * `"Sky"` or `"black"`.
+   * @return A handle to a {@link ScriptInterface} associated with this engine
    * instance.
-   *
-   * The engine is not immediately usable since it must perform initialization
-   * that includes fetching resources from the network.
-   *
-   * If the value of `startMode` is not recognized, Sky mode is assumed.
-   *
-   * Additional variants of this function, taking additional arguments, may be
-   * added over time. Existing versions will be preserved to maintain backwards
-   * compatibility.
    */
   export function initControl6(
     divId: string,
@@ -2776,4 +2948,97 @@ export namespace WWTControl {
 
   /** The global WWTControl singleton instance. */
   export const singleton: WWTControl;
+}
+
+/** A class used to initialize the WWT engine.
+ *
+ * You can use the various methods on this class to configure how the engine
+ * will work, and finally invoke the {@link create} method to instantiate it.
+ *
+ * After instantiation, the engine generally can't be used immediately since it
+ * must perform initialization that includes fetching resources from the
+ * network.
+ */
+export class WWTControlBuilder {
+  /** Create a WWT engine builder.
+   *
+   * @param divId The `id` of the DOM element into which the WWT WebGL surface
+   * will be inserted when the engine is instantiated.
+   */
+  constructor(divId: string);
+
+  /** Configure whether the WWT engine should start and run its own render loop.
+   * The default is false.
+   *
+   * If set to true, upon engine instantiation of the engine, it will queue a
+   * callback that renders the scene and then requeues itself to rerun in 10
+   * milliseconds. It is generally better to manage the render loop yourself and
+   * call {@link WWTControl.renderOneFrame} manually.
+   *
+   * @param value Whether the engine should run its own render loop.
+   */
+  startRenderLoop(value: boolean): void;
+
+  /** Configure the initial view of the WWT engine.
+   *
+   * The default is to have a latitude and longitude of zero and zoom level of
+   * 360, which corresponds to a viewport height of 60 degrees in the 2D sky
+   * mode.
+   *
+   * @param startLat The starting declination or latitude for the view, in
+   * degrees.
+   * @param startLng The starting longitude or right ascension for the view, in
+   * degrees.
+   * @param startZoom The starting zoom level for the view.
+   */
+  initialView(lat: number, lng: number, zoom: number): void;
+
+  /** Configure the initial mode of the WWT engine.
+   *
+   * The default is `"sky"`, where engine starts in Sky mode showing the DSS sky
+   * map, unless {@link freestandingMode} has been activated, in which case the
+   * engine starts showing a content-free black sky map. The value `"black"`
+   * explicitly starts in this mode, but without invoking
+   * {@link freestandingMode} itself. The value `"earth"` causes the engine to
+   * start in Earth mode showing the "Blue Marble" map.
+   *
+   * @param value The starting mode: one of `"earth"`, `"Sky"`, or `"black"`.
+   */
+  initialMode(mode: string): void;
+
+  /** Configure the WWT engine to operate in freestanding mode. The default is
+   * not to do so.
+   *
+   * Calling this function configures the engine to avoid the use of any
+   * resources available from the main `worldwidetelescope.org` website. The
+   * initial view will be black sky, and the 3D solar system mode will be
+   * unavailable due to its need for centralized assets. In order to see
+   * anything, you will need to load data definitions into the engine and
+   * configure it to show something. See [the Freestanding Mode
+   * documentation][fsd] for more information.
+   *
+   * [fsd]: ../../../freestanding-mode/
+   *
+   * @param asset_baseurl The baseurl to use for engine static assets. The
+   * default value used by WWT is `https://web.wwtassets.org/engine/assets`. You
+   * can use that value here to activate freestanding mode if you are
+   * comfortable depending on the existence of the `wwtassets.org` domain.
+   * Otherwise, you can provide your own baseurl here.
+   */
+  freestandingMode(asset_baseurl: string): void;
+
+  /** Instantiate the WWT engine.
+   *
+   * After instantiation, the engine generally can't be used immediately since it
+   * must perform initialization that includes fetching resources from the
+   * network.
+   *
+   * Along with the returned {@link ScriptInterface} instance, the primary way to
+   * interact with the WWT engine is through the global singleton
+   * {@link WWTControl.singleton}.
+   *
+   * @return A handle to a {@link ScriptInterface} associated with the engine
+   * instance.
+   */
+  create(): ScriptInterface;
 }

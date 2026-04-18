@@ -5,7 +5,7 @@
 <script lang="ts">
 import { defineComponent, markRaw, nextTick } from "vue";
 import { mapActions } from "pinia";
-import { engineStore } from "./store"
+import { engineStore } from "./store";
 
 import { WWTInstance } from "@wwtelescope/engine-helpers";
 
@@ -17,11 +17,15 @@ interface ComponentData {
   renderLoopId: number | undefined;
 }
 
-/** This is the component docstring. */
+// Due to something weird about how TypeDoc is handling this, the docstring for
+// this variable is in `shims-vue.d.ts`. That looks like it would be a problem
+// if we had more than one SFC `.vue` file, but we don't.
 export default defineComponent({
-
   props: {
-    wwtNamespace: { type: String, default: "wwt", required: true }
+    // This was required for Vuex, but is no longer used with Pinia.
+    wwtNamespace: { type: String, default: "wwt", required: false },
+    wwtFreestandingAssetBaseurl: String,
+    customId: String
   },
 
   data(): ComponentData {
@@ -44,7 +48,7 @@ export default defineComponent({
 
   created() {
     // Create a globally unique ID for the div that the WWT engine can latch onto.
-    const uid = `wwtcmpt${idCounter}`;
+    const uid = this.customId === undefined ? `wwtcmpt${idCounter}` : this.customId;
     Object.defineProperties(this, {
       uniqueId: { get() { return uid; } },
     });
@@ -59,6 +63,8 @@ export default defineComponent({
       // Start at the Galactic Center by default. RA of the GC ~= 266.4 deg; in WWT, lng = 360 - RA.
       startLatDeg: -28.9,
       startLngDeg: 93.6,
+
+      freestandingAssetBaseurl: this.wwtFreestandingAssetBaseurl,
     }));
 
     // TODO: The build fails with a TypeScript error without "as WWTInstance"
@@ -100,6 +106,5 @@ export default defineComponent({
 
     this.internalUnlinkFromInstance();
   }
-
 });
 </script>
