@@ -87,16 +87,18 @@ var TangentTile$ = {
     },
 
     // Compute a 3D point at (lat, lng) displaced by altitude metres above the
-    // reference surface. We start from the gnomonic position and displace it
-    // radially outward by (altitude / demScaleFactor) in WWT world units.
+    // reference sphere. The gnomonic position lies on the tangent plane, which
+    // rises above the sphere away from the study's centre (by ~265 m at 1° on
+    // the Moon), so first project it onto the unit sphere, then scale by
+    // 1 + altitude / radius.
     geoTo3dWithAltitude: function (lat, lng, altitude, useLocalCenter) {
         var base = this.geoTo3dTan(lat, lng);
-        var scale = altitude / this.get__demScaleFactor();
         var norm = Math.sqrt(base.x * base.x + base.y * base.y + base.z * base.z);
         if (norm > 1e-12) {
-            base.x += (base.x / norm) * scale;
-            base.y += (base.y / norm) * scale;
-            base.z += (base.z / norm) * scale;
+            var r = (1 + altitude / this.get__demScaleFactor()) / norm;
+            base.x *= r;
+            base.y *= r;
+            base.z *= r;
         }
         if (useLocalCenter) {
             base.subtract(this.globalCenter);
@@ -114,9 +116,11 @@ var TangentTile$ = {
     // ---------------------------------------------------------------------------
     // DEM support for TangentTile
     //
-    // Format: 17×17 little-endian float32 values (289 bytes × 4 = 1156 bytes),
-    // stored row-major where row 0 = north edge (tv=0), col 0 = west edge (tu=0).
-    // Elevation values are in metres above the reference surface.
+    // Format: 17×17 little-endian float32 values (289 × 4 = 1156 bytes),
+    // row-major, row 0 = top edge (tv=0), col 0 = left edge (tu=0), i.e. the
+    // same orientation as the tile texture. (In planet mode tile X runs west,
+    // so col 0 is the tile's east edge.) Values are metres above the body's
+    // MeanRadius; toasty's tile-planet-dem writes this format.
     // ---------------------------------------------------------------------------
 
     _loadDemData: function () {
@@ -129,6 +133,11 @@ var TangentTile$ = {
         // demFile is already the correct 17×17 grid; alias it as demData so that
         // the shared geoTo3dWithAlt() path in Tile can access it by demIndex.
         this.demData = this.demFile;
+        // Scale altitudes by this body's radius, not the Earth default.
+        var radius = this.dataset.get_meanRadius();
+        if (radius > 0) {
+            this.set__demScaleFactor(radius);
+        }
         var total = 0;
         for (var i = 0; i < 289; i++) {
             total += this.demFile[i];
@@ -286,12 +295,9 @@ var TangentTile$ = {
                     var tu = col / N;                                // 0 = west, 1 = east
                     var lng = edges.lngMin + tu * lngRange;          // degrees lon
                     var altitude = this.demData[row * 17 + col];     // metres
-                    var pos3d;
-                    if (altitude !== 0) {
-                        pos3d = this.geoTo3dWithAltitude(lat, lng, altitude, true);
-                    } else {
-                        pos3d = this.geoTo3dTan(lat, lng).subtract(this.globalCenter);
-                    }
+                    // Always via the sphere, so zero-height vertices stay on
+                    // the globe rather than on the tangent plane.
+                    var pos3d = this.geoTo3dWithAltitude(lat, lng, altitude, true);
                     var pt = PositionTexture.createPos(pos3d, tu, tv);
                     idx = this.addVertex(buffer, idx, pt);
                 }
