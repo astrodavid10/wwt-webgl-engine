@@ -203,7 +203,14 @@ var TangentTile$ = {
         // original coarse 9-vertex mesh.
         var hasDem = tileDemEnabled && this.demData != null && this.demData.length === 289;
 
-        this.globalCenter = this.geoTo3dTan(0, 0);
+        // Sky studies draw relative to their centre: TileShader adds the
+        // centre's projected position to each vertex offset, which is only
+        // correct when the camera is ~1 unit from the tile (true on the sky
+        // sphere). In planet mode the camera can be kilometres above the
+        // surface, which shrank studies to a dot. Draw planet studies with
+        // absolute positions, as the base planet (Toast) tiles do.
+        var planetLike = this.dataset.get_dataSetType() === 0 || this.dataset.get_dataSetType() === 1; // Earth, Planet
+        this.globalCenter = planetLike ? Vector3d.create(0, 0, 0) : this.geoTo3dTan(0, 0);
         var edges = this.getLatLngEdges();
 
         if (renderContext.gl == null || !hasDem) {

@@ -747,6 +747,14 @@ var WWTControl$ = {
                         this.renderContext.device.restore();
                     }
                     else {
+                        // A planet study is an overlay on the base map: clear depth so the
+                        // base sphere can't hide it (real terrain can sit km below the
+                        // reference radius), while its own DEM mesh still depth-tests
+                        // against itself.
+                        var fgType = this.renderContext.get_foregroundImageset().get_dataSetType();
+                        if (this.renderContext.gl != null && (fgType === 0 || fgType === 1)) {
+                            this.renderContext.gl.clear(this.renderContext.gl.DEPTH_BUFFER_BIT);
+                        }
                         this.renderContext.drawImageSet(this.renderContext.get_foregroundImageset(), this.renderContext.viewCamera.opacity);
                     }
                 }
