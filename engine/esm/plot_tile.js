@@ -41,16 +41,7 @@ PlotTile.create = function (level, xc, yc, dataset, parent) {
     if (temp.tileX !== xc) {
         alert('bad');
     }
-    if (!!dataset.get_meanRadius()) {
-        temp.set__demScaleFactor(dataset.get_meanRadius());
-    }
-    else {
-        if (!dataset.get_dataSetType()) {
-            temp.set__demScaleFactor(6371000);
-        } else {
-            temp.set__demScaleFactor(3396010);
-        }
-    }
+    temp.set__demScaleFactor(Tile.defaultDemScaleFactor(dataset));
     temp.computeBoundingSphere();
     return temp;
 };

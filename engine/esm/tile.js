@@ -102,6 +102,29 @@ Tile.lastDeepestLevel = 0;
 Tile.deepestLevel = 0;
 Tile.RC = (3.1415927 / 180);
 
+// Body radii (m) used to scale DEM heights when an imageset doesn't give a
+// MeanRadius. Keyed by lower-cased ReferenceFrame; IAU mean radii except Mars,
+// which keeps the engine's historical equatorial value.
+Tile._bodyRadii = {
+    mercury: 2439700, venus: 6051800, earth: 6371000, moon: 1737400, mars: 3396010,
+    jupiter: 69911000, io: 1821600, europa: 1560800, ganymede: 2634100, callisto: 2410300,
+    saturn: 58232000, titan: 2574700, enceladus: 252100, pluto: 1188300, ceres: 469700, vesta: 262700
+};
+
+// DEM heights are divided by this to get a fraction of the body's radius.
+// Previously every non-Earth planet fell back to Mars's radius, so lunar
+// relief rendered at about half its true scale.
+Tile.defaultDemScaleFactor = function (dataset) {
+    if (!!dataset.get_meanRadius()) {
+        return dataset.get_meanRadius();
+    }
+    var frame = (dataset.get_referenceFrame() || '').toLowerCase();
+    if (Tile._bodyRadii[frame] != null) {
+        return Tile._bodyRadii[frame];
+    }
+    return !dataset.get_dataSetType() ? 6371000 : 3396010;
+};
+
 Tile.getFrustumList = function () {
     try {
         return Tile.frustumList;
